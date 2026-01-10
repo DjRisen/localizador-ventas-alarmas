@@ -9,12 +9,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- EmailJS para envío de correos -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    
-    <!-- SweetAlert2 para notificaciones bonitas -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
     <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -1421,12 +1415,6 @@
     <!-- JAVASCRIPT COMPLETO CON GEOLOCALIZACIÓN GRATUITA Y NOTIFICACIONES -->
     <script>
         // ===== CONFIGURACIÓN INICIAL =====
-        // Configuración de EmailJS (para envío de correos)
-        // REGÍSTRATE EN: https://www.emailjs.com/
-        const EMAILJS_PUBLIC_KEY = 'user_public_key'; // Reemplazar con tu clave pública
-        const EMAILJS_SERVICE_ID = 'service_id'; // Reemplazar con tu Service ID
-        const EMAILJS_TEMPLATE_ID = 'template_id'; // Reemplazar con tu Template ID
-        
         // Variables globales
         let mapa;
         let marcadores = [];
@@ -1437,9 +1425,8 @@
         let alertasEnviadas = [];
         let miUbicacionMarker;
         let watchId;
-        let notificacionSound = null;
         
-        // Configuración de alertas
+        // Configuración de alertas (YA CONFIGURADO CON TUS DATOS)
         let configAlertas = {
             correo: "avisosderobos@gmail.com",
             whatsapp: "621284357",
@@ -1565,7 +1552,6 @@
             iniciarAplicacion();
             actualizarHora();
             iniciarGeolocalizacion();
-            inicializarEmailJS();
             mostrarNotificacion('✅ Sistema activo', 'Geolocalización gratuita y sistema de alertas cargados correctamente');
             actualizarContadorNotificaciones();
             cargarHistorialAlertas();
@@ -1599,11 +1585,8 @@
             // Inicializar mapa con OpenStreetMap
             setTimeout(initMap, 1000);
             
-            // Crear sonido de notificación
-            crearSonidoNotificacion();
-            
-            // Configurar EmailJS
-            emailjs.init(EMAILJS_PUBLIC_KEY);
+            // Guardar en localStorage
+            guardarEnLocalStorage();
         }
         
         // ===== OPENSTREETMAP (LEAFLET) - GEOLOCALIZACIÓN GRATUITA =====
@@ -1623,21 +1606,12 @@
             // Añadir marcadores de robos iniciales
             agregarMarcadoresRobos();
             
-            // Configurar buscador de direcciones
-            configurarBuscadorDirecciones();
-            
             // Añadir evento para cerrar panel de información
             mapa.on('click', function() {
                 document.getElementById('map-info-panel').style.display = 'none';
             });
             
             console.log("Mapa OpenStreetMap cargado correctamente");
-        }
-        
-        function configurarBuscadorDirecciones() {
-            // Esta función sería para integrar un buscador de direcciones
-            // OpenStreetMap tiene su propia API de búsqueda (Nominatim)
-            console.log("Buscador de direcciones configurado para OpenStreetMap");
         }
         
         function buscarDireccion() {
@@ -2037,27 +2011,23 @@
         // ===== SISTEMA DE NOTIFICACIONES CON SONIDO =====
         function crearSonidoNotificacion() {
             try {
-                // Crear un contexto de audio
+                // Crear sonido simple de notificación
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                
-                // Crear oscilador para el sonido de notificación
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
                 
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
                 
-                // Configurar el sonido (timbre de campana)
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
                 
-                // Configurar volumen (envelope)
                 gainNode.gain.setValueAtTime(0, audioContext.currentTime);
                 gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
                 
-                // Guardar para uso posterior
-                notificacionSound = { oscillator, gainNode, audioContext };
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.6);
                 
             } catch (e) {
                 console.log("Audio no disponible en este navegador");
@@ -2065,53 +2035,8 @@
         }
         
         function reproducirSonidoNotificacion() {
-            if (!notificacionSound) {
-                crearSonidoNotificacion();
-            }
-            
             try {
-                // Detener cualquier sonido anterior
-                if (notificacionSound.oscillator) {
-                    notificacionSound.oscillator.stop();
-                }
-                
-                // Crear nuevo oscilador
-                const oscillator = notificacionSound.audioContext.createOscillator();
-                const gainNode = notificacionSound.audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(notificacionSound.audioContext.destination);
-                
-                // Sonido de campana (dos tonos)
-                oscillator.type = 'sine';
-                
-                // Primer tono
-                oscillator.frequency.setValueAtTime(800, notificacionSound.audioContext.currentTime);
-                gainNode.gain.setValueAtTime(0, notificacionSound.audioContext.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.3, notificacionSound.audioContext.currentTime + 0.1);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, notificacionSound.audioContext.currentTime + 0.3);
-                
-                // Segundo tono (después de una pausa corta)
-                setTimeout(() => {
-                    const oscillator2 = notificacionSound.audioContext.createOscillator();
-                    const gainNode2 = notificacionSound.audioContext.createGain();
-                    
-                    oscillator2.connect(gainNode2);
-                    gainNode2.connect(notificacionSound.audioContext.destination);
-                    
-                    oscillator2.type = 'sine';
-                    oscillator2.frequency.setValueAtTime(600, notificacionSound.audioContext.currentTime);
-                    gainNode2.gain.setValueAtTime(0, notificacionSound.audioContext.currentTime);
-                    gainNode2.gain.linearRampToValueAtTime(0.2, notificacionSound.audioContext.currentTime + 0.1);
-                    gainNode2.gain.exponentialRampToValueAtTime(0.01, notificacionSound.audioContext.currentTime + 0.4);
-                    
-                    oscillator2.start();
-                    oscillator2.stop(notificacionSound.audioContext.currentTime + 0.5);
-                }, 300);
-                
-                oscillator.start();
-                oscillator.stop(notificacionSound.audioContext.currentTime + 0.8);
-                
+                crearSonidoNotificacion();
             } catch (e) {
                 console.log("No se pudo reproducir sonido");
             }
@@ -2225,69 +2150,27 @@
         }
         
         // ===== SISTEMA DE ALERTAS POR CORREO Y WHATSAPP =====
-        function inicializarEmailJS() {
-            // EmailJS ya se inicializó en iniciarAplicacion()
-            console.log("EmailJS inicializado");
-        }
-        
         function enviarAlertaCorreo(titulo, mensaje, datosAdicionales = {}) {
-            // Configurar parámetros para EmailJS
-            const templateParams = {
-                to_email: configAlertas.correo,
-                from_name: "Sistema de Alertas de Robos",
-                subject: titulo,
-                message: mensaje,
-                direccion: datosAdicionales.direccion || "No especificada",
-                municipio: datosAdicionales.municipio || "No especificado",
-                prioridad: datosAdicionales.prioridad || "media",
-                fecha: new Date().toLocaleString(),
-                coordenadas: datosAdicionales.coordenadas || "No disponibles"
-            };
-            
-            // Enviar correo usando EmailJS
-            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
-                .then(function(response) {
-                    console.log('Correo enviado con éxito:', response);
-                    
-                    // Registrar en historial
-                    registrarAlertaEnviada({
-                        tipo: 'correo',
-                        destinatario: configAlertas.correo,
-                        titulo: titulo,
-                        mensaje: mensaje,
-                        fecha: new Date(),
-                        estado: 'enviado'
-                    });
-                    
-                    mostrarNotificacion('📧 Correo enviado', 'La alerta se ha enviado por correo correctamente');
-                }, function(error) {
-                    console.log('Error al enviar correo:', error);
-                    
-                    // Registrar en historial como fallido
-                    registrarAlertaEnviada({
-                        tipo: 'correo',
-                        destinatario: configAlertas.correo,
-                        titulo: titulo,
-                        mensaje: mensaje,
-                        fecha: new Date(),
-                        estado: 'error'
-                    });
-                    
-                    mostrarNotificacion('❌ Error en correo', 'No se pudo enviar el correo. Usando método alternativo.');
-                    
-                    // Método alternativo: abrir cliente de correo
-                    enviarCorreoAlternativo(titulo, mensaje, datosAdicionales);
-                });
-        }
-        
-        function enviarCorreoAlternativo(titulo, mensaje, datosAdicionales) {
+            // Método simple usando mailto: (funciona sin configuración)
             const asunto = encodeURIComponent(titulo);
-            const cuerpo = encodeURIComponent(`${mensaje}\n\nDetalles adicionales:\nDirección: ${datosAdicionales.direccion || 'No especificada'}\nMunicipio: ${datosAdicionales.municipio || 'No especificado'}\nPrioridad: ${datosAdicionales.prioridad || 'media'}\nFecha: ${new Date().toLocaleString()}`);
+            const cuerpo = encodeURIComponent(`${mensaje}\n\nDetalles adicionales:\nDirección: ${datosAdicionales.direccion || 'No especificada'}\nMunicipio: ${datosAdicionales.municipio || 'No especificado'}\nPrioridad: ${datosAdicionales.prioridad || 'media'}\nFecha: ${new Date().toLocaleString()}\nCoordenadas: ${datosAdicionales.coordenadas || 'No disponibles'}`);
             
             const mailtoLink = `mailto:${configAlertas.correo}?subject=${asunto}&body=${cuerpo}`;
             
             // Abrir cliente de correo
             window.open(mailtoLink, '_blank');
+            
+            // Registrar en historial
+            registrarAlertaEnviada({
+                tipo: 'correo',
+                destinatario: configAlertas.correo,
+                titulo: titulo,
+                mensaje: mensaje,
+                fecha: new Date(),
+                estado: 'enviado'
+            });
+            
+            mostrarNotificacion('📧 Correo listo', 'Se ha abierto tu cliente de correo con el mensaje preparado');
         }
         
         function enviarAlertaWhatsApp(mensaje) {
@@ -2347,6 +2230,8 @@
             
             // Actualizar estadísticas
             actualizarEstadisticas();
+            
+            mostrarNotificacion('✅ Alertas enviadas', 'Se han enviado alertas por correo y WhatsApp');
         }
         
         function mostrarQuickAlert(roboId) {
@@ -2482,227 +2367,6 @@
             mostrarNotificacion('🚨 Todos los robos', `Mostrando ${robos.length} incidentes en el mapa`);
         }
         
-        function mostrarVisitasAgendadas() {
-            if (!mapa || agenda.length === 0) return;
-            
-            // Limpiar marcadores anteriores
-            marcadores.forEach(marker => mapa.removeLayer(marker));
-            marcadores = [];
-            
-            // Añadir marcadores de visitas
-            const visitasMarkers = [];
-            agenda.forEach(visita => {
-                if (visita.coordenadas) {
-                    const iconoVisita = L.divIcon({
-                        className: 'visita-marker',
-                        html: `<div style="background-color: #10b981; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`,
-                        iconSize: [20, 20],
-                        iconAnchor: [10, 10]
-                    });
-                    
-                    const marker = L.marker([visita.coordenadas.lat, visita.coordenadas.lng], { icon: iconoVisita })
-                        .addTo(mapa)
-                        .bindPopup(`
-                            <div style="padding: 10px; min-width: 250px;">
-                                <h3 style="margin: 0 0 10px 0; color: #10b981;">📅 ${visita.cliente}</h3>
-                                <p><strong>📍 Dirección:</strong> ${visita.direccion}</p>
-                                <p><strong>🏘️ Municipio:</strong> ${visita.municipio}</p>
-                                <p><strong>🕒 Fecha/Hora:</strong> ${formatearFechaHora(visita.fecha)}</p>
-                                <p><strong>📞 Teléfono:</strong> ${visita.telefono}</p>
-                                <p><strong>📝 Motivo:</strong> ${visita.motivo}</p>
-                                <div style="margin-top: 10px;">
-                                    <button onclick="iniciarNavegacionAVisita(${visita.coordenadas.lat}, ${visita.coordenadas.lng})" style="
-                                        background: #10b981;
-                                        color: white;
-                                        border: none;
-                                        padding: 6px 12px;
-                                        border-radius: 6px;
-                                        cursor: pointer;
-                                        font-weight: bold;
-                                    ">
-                                        🗺️ Navegar a visita
-                                    </button>
-                                </div>
-                            </div>
-                        `);
-                    
-                    marcadores.push(marker);
-                    visitasMarkers.push(marker);
-                }
-            });
-            
-            if (visitasMarkers.length > 0) {
-                const grupo = L.featureGroup(visitasMarkers);
-                mapa.fitBounds(grupo.getBounds());
-            }
-            
-            actualizarContadorMarcadores();
-            mostrarNotificacion('📅 Visitas agendadas', `Mostrando ${agenda.length} visitas en el mapa`);
-        }
-        
-        function mostrarOportunidadesMapa() {
-            if (!mapa) return;
-            
-            // Coordenadas de municipios con oportunidades
-            const oportunidades = [
-                { nombre: "CÓRDOBA", lat: 37.8882, lng: -4.7794, oportunidades: 25 },
-                { nombre: "LUCENA", lat: 37.4088, lng: -4.4854, oportunidades: 18 },
-                { nombre: "PUENTE GENIL", lat: 37.3894, lng: -4.7669, oportunidades: 14 },
-                { nombre: "MONTILLA", lat: 37.5867, lng: -4.6383, oportunidades: 12 }
-            ];
-            
-            // Limpiar marcadores anteriores
-            marcadores.forEach(marker => mapa.removeLayer(marker));
-            marcadores = [];
-            
-            const oportunidadesMarkers = [];
-            oportunidades.forEach(op => {
-                const iconoOportunidad = L.divIcon({
-                    className: 'oportunidad-marker',
-                    html: `<div style="background-color: #f59e0b; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">💰</div>`,
-                    iconSize: [24, 24],
-                    iconAnchor: [12, 12]
-                });
-                
-                const marker = L.marker([op.lat, op.lng], { icon: iconoOportunidad })
-                    .addTo(mapa)
-                    .bindPopup(`
-                        <div style="padding: 10px; min-width: 250px;">
-                            <h3 style="margin: 0 0 10px 0; color: #f59e0b;">💰 ${op.nombre}</h3>
-                            <p><strong>🎯 Oportunidades detectadas:</strong> ${op.oportunidades}</p>
-                            <p><strong>📈 Prioridad:</strong> <span style="color: #f59e0b; font-weight: bold;">ALTA</span></p>
-                            <p><strong>💡 Recomendación:</strong> Visita prioritaria esta semana</p>
-                            <div style="margin-top: 10px;">
-                                <button onclick="mostrarSeccion('agenda')" style="
-                                    background: #f59e0b;
-                                    color: white;
-                                    border: none;
-                                    padding: 6px 12px;
-                                    border-radius: 6px;
-                                    cursor: pointer;
-                                    font-weight: bold;
-                                ">
-                                    📅 Agendar visita
-                                </button>
-                            </div>
-                        </div>
-                    `);
-                
-                marcadores.push(marker);
-                oportunidadesMarkers.push(marker);
-            });
-            
-            if (oportunidadesMarkers.length > 0) {
-                const grupo = L.featureGroup(oportunidadesMarkers);
-                mapa.fitBounds(grupo.getBounds());
-            }
-            
-            actualizarContadorMarcadores();
-            mostrarNotificacion('💰 Zonas de oportunidad', 'Mostrando municipios con alta demanda de seguridad');
-        }
-        
-        function calcularRuta() {
-            const origen = prompt("Introduce dirección de origen (o deja vacío para usar tu ubicación):");
-            const destino = prompt("Introduce dirección de destino:");
-            
-            if (!destino) {
-                mostrarNotificacion('⚠️ Dirección requerida', 'Introduce una dirección de destino');
-                return;
-            }
-            
-            // Para OpenStreetMap, podríamos usar OSRM o similar para rutas
-            // Por simplicidad, mostramos un mensaje
-            mostrarNotificacion('🛣️ Funcionalidad de ruta', 'Para calcular rutas, puedes usar:\n1. Google Maps externo\n2. Abrir navegación desde los marcadores\n\nPróximamente integraremos OSRM para rutas gratuitas.');
-        }
-        
-        function guardarUbicacion() {
-            const centro = mapa.getCenter();
-            const lat = centro.lat;
-            const lng = centro.lng;
-            
-            const nombre = prompt("Nombre para esta ubicación (ej: Cliente importante, Punto de reunión):");
-            if (!nombre) return;
-            
-            // Obtener dirección desde coordenadas
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-                .then(response => response.json())
-                .then(data => {
-                    let direccion = data.display_name || `Coordenadas: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                    
-                    // Añadir a notas
-                    const nuevaNota = {
-                        id: Date.now(),
-                        titulo: `📍 Ubicación guardada: ${nombre}`,
-                        contenido: `Dirección: ${direccion}\nCoordenadas: ${lat.toFixed(6)}, ${lng.toFixed(6)}\nGuardado el: ${new Date().toLocaleString()}`,
-                        fecha: new Date(),
-                        categoria: 'recordatorio',
-                        prioridad: 'media'
-                    };
-                    
-                    notas.unshift(nuevaNota);
-                    guardarEnLocalStorage();
-                    cargarNotasRecientes();
-                    cargarListaNotasCompleta();
-                    
-                    mostrarNotificacion('💾 Ubicación guardada', `"${nombre}" guardado en el bloc de notas`);
-                })
-                .catch(() => {
-                    // Si falla, usar coordenadas
-                    const nuevaNota = {
-                        id: Date.now(),
-                        titulo: `📍 Ubicación guardada: ${nombre}`,
-                        contenido: `Coordenadas: ${lat.toFixed(6)}, ${lng.toFixed(6)}\nGuardado el: ${new Date().toLocaleString()}`,
-                        fecha: new Date(),
-                        categoria: 'recordatorio',
-                        prioridad: 'media'
-                    };
-                    
-                    notas.unshift(nuevaNota);
-                    guardarEnLocalStorage();
-                    cargarNotasRecientes();
-                    cargarListaNotasCompleta();
-                    
-                    mostrarNotificacion('💾 Ubicación guardada', `"${nombre}" guardado en el bloc de notas`);
-                });
-        }
-        
-        function enviarUbicacionActual() {
-            if (!miUbicacionMarker) {
-                mostrarNotificacion('⚠️ Ubicación no disponible', 'Primero obtén tu ubicación actual');
-                return;
-            }
-            
-            const latlng = miUbicacionMarker.getLatLng();
-            const mensaje = `📍 Mi ubicación actual:\nLatitud: ${latlng.lat.toFixed(6)}\nLongitud: ${latlng.lng.toFixed(6)}\nFecha: ${new Date().toLocaleString()}`;
-            
-            // Enviar por WhatsApp
-            enviarAlertaWhatsApp(mensaje);
-            
-            mostrarNotificacion('📍 Ubicación enviada', 'Se ha abierto WhatsApp con tu ubicación actual');
-        }
-        
-        function guardarUbicacionComoFavorita(lat, lng, direccion) {
-            const nombre = prompt("Nombre para esta ubicación favorita:");
-            if (!nombre) return;
-            
-            const nuevaNota = {
-                id: Date.now(),
-                titulo: `⭐ Favorito: ${nombre}`,
-                contenido: `📍 ${direccion}\n🎯 Coordenadas: ${lat.toFixed(6)}, ${lng.toFixed(6)}\n💾 Guardado el: ${new Date().toLocaleString()}`,
-                fecha: new Date(),
-                categoria: 'recordatorio',
-                prioridad: 'alta'
-            };
-            
-            notas.unshift(nuevaNota);
-            guardarEnLocalStorage();
-            cargarNotasRecientes();
-            cargarListaNotasCompleta();
-            
-            cerrarPanelInfo();
-            mostrarNotificacion('⭐ Ubicación favorita', `"${nombre}" guardado en notas`);
-        }
-        
         function limpiarMapa() {
             // Limpiar todos los marcadores
             marcadores.forEach(marker => mapa.removeLayer(marker));
@@ -2718,20 +2382,6 @@
             const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
             window.open(url, '_blank');
             mostrarNotificacion('🗺️ Navegación iniciada', 'Abriendo Google Maps con la ruta');
-        }
-        
-        function iniciarNavegacionAVisita(lat, lng) {
-            navegarAUbicacion(lat, lng);
-        }
-        
-        function agendarVisitaUbicacion(lat, lng, direccion) {
-            mostrarSeccion('agenda');
-            
-            // Rellenar formulario con la dirección
-            document.getElementById('direccion-visita').value = direccion;
-            document.getElementById('cliente-visita').value = `Visita por robo en ${direccion.split(',')[0]}`;
-            
-            mostrarNotificacion('📅 Visita sugerida', 'Formulario de visita pre-llenado con la ubicación del robo');
         }
         
         // ===== GESTIÓN DE ROBOS =====
@@ -2816,8 +2466,65 @@
             mostrarNotificacion('✅ Robo simulado', `Se ha añadido un robo de prueba en ${municipio}`);
         }
         
-        // [El resto del código JavaScript se mantiene igual que en la versión anterior, 
-        // solo actualizando las referencias de Google Maps a Leaflet donde sea necesario]
+        function agregarMarcadorRobo(robo) {
+            if (!mapa || !robo.coordenadas) return;
+            
+            const color = robo.prioridad === 'alta' ? '#dc2626' : 
+                         robo.prioridad === 'media' ? '#f59e0b' : '#10b981';
+            
+            // Crear icono personalizado
+            const iconoPersonalizado = L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+            
+            const marker = L.marker([robo.coordenadas.lat, robo.coordenadas.lng], { icon: iconoPersonalizado })
+                .addTo(mapa)
+                .bindPopup(`
+                    <div style="padding: 10px; min-width: 250px;">
+                        <h3 style="margin: 0 0 10px 0; color: ${color}; font-size: 1.1rem;">🚨 ${robo.tipo}</h3>
+                        <p><strong>📍 Ubicación:</strong> ${robo.direccion}</p>
+                        <p><strong>🏘️ Municipio:</strong> ${robo.municipio}</p>
+                        <p><strong>🎯 Prioridad:</strong> <span style="color: ${color}; font-weight: bold;">${robo.prioridad.toUpperCase()}</span></p>
+                        <p><strong>🕒 Hora:</strong> ${formatearTiempoRelativo(robo.fecha)}</p>
+                        <p><strong>📝 Detalles:</strong> ${robo.detalles}</p>
+                        <div style="margin-top: 10px;">
+                            <button onclick="navegarAUbicacion(${robo.coordenadas.lat}, ${robo.coordenadas.lng})" style="
+                                background: ${color};
+                                color: white;
+                                border: none;
+                                padding: 6px 12px;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                font-weight: bold;
+                                margin-right: 5px;
+                            ">
+                                🗺️ Navegar
+                            </button>
+                            <button onclick="mostrarQuickAlert(${robo.id})" style="
+                                background: #3b82f6;
+                                color: white;
+                                border: none;
+                                padding: 6px 12px;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                font-weight: bold;
+                            ">
+                                📢 Alertar
+                            </button>
+                        </div>
+                    </div>
+                `);
+            
+            marker.on('click', () => {
+                mostrarPanelInfoRobo(robo);
+            });
+            
+            marcadores.push(marker);
+            actualizarContadorMarcadores();
+        }
         
         // ===== FUNCIONES UTILITARIAS =====
         function mostrarSeccion(seccion) {
@@ -2878,17 +2585,6 @@
             } else {
                 return 'Ahora mismo';
             }
-        }
-        
-        function formatearFechaHora(fecha) {
-            return new Date(fecha).toLocaleDateString('es-ES', {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
         }
         
         function configurarFechasFormularios() {
@@ -3007,6 +2703,312 @@
         
         // Inicializar cuando se carga la página
         window.initMap = initMap;
+        
+        // Funciones que se llaman desde otros lugares
+        function cargarUltimosRobos() {
+            const contenedor = document.getElementById('ultimos-robos');
+            if (!contenedor) return;
+            
+            const ultimosRobos = robos.slice(0, 3);
+            
+            if (ultimosRobos.length === 0) {
+                contenedor.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 20px;">No hay robos recientes</p>';
+                return;
+            }
+            
+            let html = '';
+            ultimosRobos.forEach(robo => {
+                const color = robo.prioridad === 'alta' ? '#dc2626' : 
+                             robo.prioridad === 'media' ? '#f59e0b' : '#10b981';
+                
+                html += `
+                    <div class="robo-alert" onclick="mostrarRoboEnMapa(${robo.id})">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="margin: 0; color: ${color};">🚨 ${robo.tipo}</h3>
+                            <span style="background: ${color}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                                ${robo.prioridad.toUpperCase()}
+                            </span>
+                        </div>
+                        <p><strong>📍 ${robo.direccion}</strong></p>
+                        <p><strong>🏘️ ${robo.municipio}</strong> • ${robo.zona}</p>
+                        <div class="location-info">${formatearTiempoRelativo(robo.fecha)}</div>
+                        <p style="margin: 10px 0;">${robo.detalles}</p>
+                        <div class="coordinates">🎯 ${robo.coordenadas.lat.toFixed(6)}, ${robo.coordenadas.lng.toFixed(6)}</div>
+                        <button class="action-btn" onclick="event.stopPropagation(); navegarAUbicacion(${robo.coordenadas.lat}, ${robo.coordenadas.lng})">
+                            <span>🗺️</span> Navegar al lugar
+                        </button>
+                    </div>
+                `;
+            });
+            
+            contenedor.innerHTML = html;
+        }
+        
+        function cargarListaRobosCompleta() {
+            const contenedor = document.getElementById('lista-robos-completa');
+            if (!contenedor) return;
+            
+            if (robos.length === 0) {
+                contenedor.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 40px;">No hay robos reportados</p>';
+                return;
+            }
+            
+            // Ordenar por fecha (más recientes primero)
+            const robosOrdenados = [...robos].sort((a, b) => b.fecha - a.fecha);
+            
+            let html = '';
+            robosOrdenados.forEach(robo => {
+                const color = robo.prioridad === 'alta' ? '#dc2626' : 
+                             robo.prioridad === 'media' ? '#f59e0b' : '#10b981';
+                
+                html += `
+                    <div class="robo-alert" onclick="mostrarRoboEnMapa(${robo.id})">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                            <div>
+                                <h3 style="margin: 0 0 5px 0; color: ${color};">🚨 ${robo.tipo}</h3>
+                                <p style="margin: 0; font-size: 0.9rem; color: #6b7280;">${robo.municipio} • ${robo.zona}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="background: ${color}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                                    ${robo.prioridad.toUpperCase()}
+                                </span>
+                                <div style="font-size: 0.8rem; color: #6b7280; margin-top: 5px;">${formatearTiempoRelativo(robo.fecha)}</div>
+                            </div>
+                        </div>
+                        <p><strong>📍 Dirección:</strong> ${robo.direccion}</p>
+                        <p><strong>📝 Detalles:</strong> ${robo.detalles}</p>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button class="action-btn" onclick="event.stopPropagation(); navegarAUbicacion(${robo.coordenadas.lat}, ${robo.coordenadas.lng})">
+                                <span>🗺️</span> Navegar
+                            </button>
+                            <button class="action-btn" onclick="event.stopPropagation(); mostrarQuickAlert(${robo.id})" style="background: #3b82f6;">
+                                <span>📢</span> Alertar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            contenedor.innerHTML = html;
+        }
+        
+        function mostrarRoboEnMapa(id) {
+            const robo = robos.find(r => r.id === id);
+            if (!robo || !robo.coordenadas || !mapa) return;
+            
+            mostrarSeccion('mapa');
+            
+            // Centrar mapa en el robo
+            mapa.setView([robo.coordenadas.lat, robo.coordenadas.lng], 16);
+            
+            // Encontrar y resaltar el marcador
+            marcadores.forEach(marker => {
+                const position = marker.getLatLng();
+                if (position && 
+                    Math.abs(position.lat - robo.coordenadas.lat) < 0.0001 &&
+                    Math.abs(position.lng - robo.coordenadas.lng) < 0.0001) {
+                    // Animación simple (podrías agregar más efectos aquí)
+                    marker.openPopup();
+                }
+            });
+            
+            mostrarPanelInfoRobo(robo);
+        }
+        
+        function filtrarRobos() {
+            const filtro = document.getElementById('filtro-robos').value.toLowerCase();
+            const prioridad = document.getElementById('filtro-prioridad').value;
+            
+            let robosFiltrados = robos;
+            
+            if (filtro) {
+                robosFiltrados = robosFiltrados.filter(robo => 
+                    robo.direccion.toLowerCase().includes(filtro) ||
+                    robo.municipio.toLowerCase().includes(filtro) ||
+                    robo.zona.toLowerCase().includes(filtro) ||
+                    robo.tipo.toLowerCase().includes(filtro) ||
+                    robo.detalles.toLowerCase().includes(filtro)
+                );
+            }
+            
+            if (prioridad) {
+                robosFiltrados = robosFiltrados.filter(robo => robo.prioridad === prioridad);
+            }
+            
+            // Actualizar la lista
+            const contenedor = document.getElementById('lista-robos-completa');
+            
+            if (robosFiltrados.length === 0) {
+                contenedor.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 40px;">No se encontraron robos con esos filtros</p>';
+                return;
+            }
+            
+            let html = '';
+            robosFiltrados.forEach(robo => {
+                const color = robo.prioridad === 'alta' ? '#dc2626' : 
+                             robo.prioridad === 'media' ? '#f59e0b' : '#10b981';
+                
+                html += `
+                    <div class="robo-alert" onclick="mostrarRoboEnMapa(${robo.id})">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                            <div>
+                                <h3 style="margin: 0 0 5px 0; color: ${color};">🚨 ${robo.tipo}</h3>
+                                <p style="margin: 0; font-size: 0.9rem; color: #6b7280;">${robo.municipio} • ${robo.zona}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="background: ${color}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                                    ${robo.prioridad.toUpperCase()}
+                                </span>
+                                <div style="font-size: 0.8rem; color: #6b7280; margin-top: 5px;">${formatearTiempoRelativo(robo.fecha)}</div>
+                            </div>
+                        </div>
+                        <p><strong>📍 Dirección:</strong> ${robo.direccion}</p>
+                        <p style="margin: 10px 0;">${robo.detalles}</p>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button class="action-btn" onclick="event.stopPropagation(); navegarAUbicacion(${robo.coordenadas.lat}, ${robo.coordenadas.lng})">
+                                <span>🗺️</span> Navegar
+                            </button>
+                            <button class="action-btn" onclick="event.stopPropagation(); mostrarQuickAlert(${robo.id})" style="background: #3b82f6;">
+                                <span>📢</span> Alertar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            contenedor.innerHTML = html;
+        }
+        
+        function reportarNuevoRobo() {
+            const direccion = document.getElementById('nueva-direccion').value;
+            const municipio = document.getElementById('nuevo-municipio').value;
+            const hora = document.getElementById('nueva-hora').value;
+            const detalles = document.getElementById('nuevos-detalles').value;
+            const prioridad = document.querySelector('input[name="prioridad"]:checked').value;
+            const enviarCorreo = document.getElementById('enviar-correo').checked;
+            const enviarWhatsApp = document.getElementById('enviar-whatsapp').checked;
+            const enviarNotificacion = document.getElementById('enviar-notificacion').checked;
+            
+            if (!direccion || !municipio || !detalles) {
+                mostrarNotificacion('⚠️ Campos requeridos', 'Completa todos los campos obligatorios');
+                return;
+            }
+            
+            // Coordenadas aproximadas basadas en municipio
+            const coordenadasPorMunicipio = {
+                "CÓRDOBA": { lat: 37.8882 + (Math.random() * 0.02 - 0.01), lng: -4.7794 + (Math.random() * 0.02 - 0.01) },
+                "LUCENA": { lat: 37.4088 + (Math.random() * 0.02 - 0.01), lng: -4.4854 + (Math.random() * 0.02 - 0.01) },
+                "PUENTE GENIL": { lat: 37.3894 + (Math.random() * 0.02 - 0.01), lng: -4.7669 + (Math.random() * 0.02 - 0.01) },
+                "MONTILLA": { lat: 37.5867 + (Math.random() * 0.02 - 0.01), lng: -4.6383 + (Math.random() * 0.02 - 0.01) },
+                "PRIEGO": { lat: 37.4381 + (Math.random() * 0.02 - 0.01), lng: -4.1950 + (Math.random() * 0.02 - 0.01) },
+                "CABRA": { lat: 37.4725 + (Math.random() * 0.02 - 0.01), lng: -4.4421 + (Math.random() * 0.02 - 0.01) }
+            };
+            
+            const coordenadas = coordenadasPorMunicipio[municipio] || { lat: 37.8882, lng: -4.7794 };
+            
+            // Crear nuevo robo
+            const nuevoRobo = {
+                id: Date.now(),
+                direccion: direccion,
+                municipio: municipio,
+                zona: "Por determinar",
+                tipo: "Robo reportado",
+                detalles: detalles,
+                fecha: hora ? new Date(hora) : new Date(),
+                prioridad: prioridad,
+                coordenadas: coordenadas,
+                codigoPostal: "14000",
+                notificado: false
+            };
+            
+            // Añadir a la lista
+            robos.unshift(nuevoRobo);
+            
+            // Actualizar interfaces
+            cargarUltimosRobos();
+            cargarListaRobosCompleta();
+            actualizarEstadisticas();
+            
+            // Añadir marcador al mapa si está inicializado
+            if (mapa) {
+                agregarMarcadorRobo(nuevoRobo);
+            }
+            
+            // Enviar alertas si están configuradas
+            if (enviarNotificacion) {
+                mostrarNotificacion('🚨 Nuevo robo reportado', `${municipio}: ${direccion}`, "peligro");
+            }
+            
+            if ((enviarCorreo || enviarWhatsApp) && configAlertas.alertaRobo) {
+                const titulo = `🚨 NUEVO ROBO: ${municipio}`;
+                const mensaje = `Nuevo robo reportado:\n\n📍 ${direccion}\n🏘️ ${municipio}\n🚨 Robo reportado\n🎯 Prioridad: ${prioridad.toUpperCase()}\n📝 ${detalles}\n🕒 ${formatearTiempoRelativo(nuevoRobo.fecha)}`;
+                
+                if (enviarCorreo) {
+                    enviarAlertaCorreo(titulo, mensaje, {
+                        direccion: direccion,
+                        municipio: municipio,
+                        prioridad: prioridad,
+                        coordenadas: `${coordenadas.lat.toFixed(6)}, ${coordenadas.lng.toFixed(6)}`
+                    });
+                }
+                
+                if (enviarWhatsApp) {
+                    enviarAlertaWhatsApp(mensaje);
+                }
+                
+                nuevoRobo.notificado = true;
+            }
+            
+            // Guardar en localStorage
+            guardarEnLocalStorage();
+            
+            // Limpiar formulario
+            document.getElementById('nueva-direccion').value = '';
+            document.getElementById('nuevo-municipio').value = '';
+            document.getElementById('nueva-hora').value = '';
+            document.getElementById('nuevos-detalles').value = '';
+            
+            // Centrar mapa en el nuevo robo
+            if (mapa) {
+                mapa.setView([coordenadas.lat, coordenadas.lng], 15);
+            }
+            
+            mostrarNotificacion('✅ Robo reportado', `Nuevo incidente añadido en ${municipio}`);
+        }
+        
+        function actualizarEstadisticas() {
+            // Actualizar contadores
+            document.getElementById('total-robos').textContent = robos.length;
+            document.getElementById('total-visitas').textContent = agenda.length;
+            document.getElementById('municipios-activos').textContent = [...new Set(robos.map(r => r.municipio))].length;
+            document.getElementById('alertas-enviadas').textContent = alertasEnviadas.length;
+            
+            // Estadísticas detalladas
+            document.getElementById('robos-totales').textContent = robos.length;
+            document.getElementById('visitas-totales').textContent = agenda.length;
+            
+            // Calcular tasa de conversión (estimada)
+            const tasaConversion = agenda.length > 0 ? Math.min(100, Math.floor((robos.length / agenda.length) * 100)) : 0;
+            document.getElementById('conversion-rate').textContent = `${tasaConversion}%`;
+            
+            // Calcular ingresos estimados
+            const ingresosEstimados = agenda.length * 500; // 500€ por visita estimada
+            document.getElementById('ingresos-estimados').textContent = `€${(ingresosEstimados/1000).toFixed(1)}K`;
+            
+            // Actualizar contador de robos activos
+            const robosRecientes = robos.filter(r => (new Date() - r.fecha) < 24 * 60 * 60 * 1000);
+            document.getElementById('robos-activos').textContent = `🚨 ${robosRecientes.length} robos activos`;
+        }
+        
+        // Inicializar cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            iniciarAplicacion();
+            actualizarHora();
+            iniciarGeolocalizacion();
+            mostrarNotificacion('✅ Sistema activo', 'Geolocalización gratuita y sistema de alertas cargados correctamente');
+            actualizarContadorNotificaciones();
+            cargarHistorialAlertas();
+        });
     </script>
 </body>
 </html>
