@@ -1,20 +1,766 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-<title>LOCALIZADOR DE VENTAS DE ALARMAS</title>
-<style>
-body { background: #1a365d; color: white; font-family: Arial; padding: 20px; text-align: center; }
-h1 { color: white; }
-.btn { background: #2b6cb0; color: white; padding: 15px; border: none; border-radius: 8px; margin: 10px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOCALIZADOR DE VENTAS DE ALARMAS</title>
+    <style>
+        /* ESTILOS GENERALES */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #1a365d; color: white; }
+        
+        /* APP CONTAINER */
+        .app-container { max-width: 100%; min-height: 100vh; }
+        
+        /* HEADER */
+        .header { 
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            color: white; 
+            padding: 20px; 
+            text-align: center;
+            border-bottom: 3px solid #2b6cb0;
+        }
+        .logo { font-size: 2.5rem; margin-bottom: 10px; }
+        h1 { font-size: 1.5rem; margin-bottom: 5px; }
+        .subtitle { color: #cbd5e0; font-size: 0.9rem; }
+        
+        /* NAVEGACIÓN */
+        .tabs {
+            display: flex;
+            background: white;
+            overflow-x: auto;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: white;
+            color: #4a5568;
+            font-weight: bold;
+            text-align: center;
+            min-width: 80px;
+        }
+        .tab.active {
+            background: #2b6cb0;
+            color: white;
+            border-bottom: 3px solid #1a365d;
+        }
+        
+        /* CONTENIDO */
+        .content { padding: 15px; }
+        
+        /* TARJETAS */
+        .card {
+            background: white;
+            color: #2d3748;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .card-title {
+            color: #1a365d;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        
+        /* ALERTAS DE ROBOS */
+        .alerta-robo {
+            background: #fff5f5;
+            border-left: 4px solid #c53030;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+        .alerta-robo .tiempo {
+            color: #718096;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+        
+        /* MAPA */
+        .mapa-container {
+            height: 300px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4a5568;
+            font-weight: bold;
+        }
+        
+        /* AGENDA */
+        .evento-agenda {
+            background: #f0fff4;
+            border-left: 4px solid #38a169;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+        }
+        
+        /* NOTAS */
+        .nota {
+            background: #fffaf0;
+            border-left: 4px solid #d69e2e;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+        }
+        
+        /* BOTONES */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #2b6cb0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        .btn:hover { background: #3182ce; }
+        
+        /* MUNICIPIOS */
+        .municipio {
+            display: inline-block;
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .municipio.alerta { background: #fed7d7; color: #9b2c2c; }
+        .municipio.oportunidad { background: #c6f6d5; color: #22543d; }
+        
+        /* NOTIFICACIONES */
+        .notificacion {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            color: #2d3748;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+            border-left: 5px solid #2b6cb0;
+        }
+    </style>
 </head>
 <body>
-<h1>🔍 LOCALIZADOR DE VENTAS DE ALARMAS</h1>
-<p>Sistema profesional para Córdoba</p>
-<button class="btn" onclick="alert('App funcionando!')">Probar Sistema</button>
-<p>✅ Córdoba - 12 oportunidades</p>
-<p>✅ Lucena - 8 oportunidades</p>
-<p>✅ Puente Genil - 6 oportunidades</p>
-<p style="margin-top: 30px;">Para instalar en móvil:<br>Chrome → ⋮ → Añadir a pantalla inicio</p>
+    <!-- APP CONTAINER -->
+    <div class="app-container">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="logo">🚨</div>
+            <h1>LOCALIZADOR DE VENTAS DE ALARMAS</h1>
+            <p class="subtitle">Alertas en tiempo real - Provincia de Córdoba</p>
+            <div style="margin-top: 10px; font-size: 0.8rem;">
+                <span id="estado-conexion">✅ Conectado</span> | 
+                <span id="hora-actual">--:--</span>
+            </div>
+        </div>
+        
+        <!-- NAVEGACIÓN -->
+        <div class="tabs">
+            <button class="tab active" onclick="mostrarSeccion('robos')">🚨 Robos</button>
+            <button class="tab" onclick="mostrarSeccion('mapa')">🗺️ Mapa</button>
+            <button class="tab" onclick="mostrarSeccion('municipios')">🏘️ Municipios</button>
+            <button class="tab" onclick="mostrarSeccion('agenda')">📅 Agenda</button>
+            <button class="tab" onclick="mostrarSeccion('notas')">📝 Notas</button>
+        </div>
+        
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="content">
+            <!-- SECCIÓN ROBOS EN TIEMPO REAL -->
+            <div id="robos" class="seccion">
+                <div class="card">
+                    <h2 class="card-title">🚨 ROBOS EN TIEMPO REAL</h2>
+                    <div id="lista-robos">
+                        <!-- Los robos se cargarán aquí automáticamente -->
+                    </div>
+                    <button class="btn" onclick="simularRobo()">
+                        🔔 Simular Nuevo Robo
+                    </button>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <small>Actualización automática cada 5 minutos</small>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2 class="card-title">📊 ESTADÍSTICAS HOY</h2>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div style="text-align: center; background: #2b6cb0; padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 2rem;" id="total-robos">0</div>
+                            <div>Robos hoy</div>
+                        </div>
+                        <div style="text-align: center; background: #38a169; padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 2rem;" id="total-oportunidades">0</div>
+                            <div>Oportunidades</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SECCIÓN MAPA -->
+            <div id="mapa" class="seccion" style="display: none;">
+                <div class="card">
+                    <h2 class="card-title">🗺️ MAPA DE LA PROVINCIA</h2>
+                    <div class="mapa-container">
+                        <div style="text-align: center;">
+                            <div style="font-size: 3rem;">📍</div>
+                            <h3>MAPA INTERACTIVO DE CÓRDOBA</h3>
+                            <p>Visualizando todos los municipios</p>
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin-top: 20px;">📍 PUNTOS CRÍTICOS</h3>
+                    <div style="margin: 15px 0;">
+                        <div class="municipio alerta">Córdoba Capital</div>
+                        <div class="municipio alerta">Lucena</div>
+                        <div class="municipio">Puente Genil</div>
+                        <div class="municipio">Montilla</div>
+                        <div class="municipio">Priego</div>
+                        <div class="municipio">Cabra</div>
+                    </div>
+                    
+                    <button class="btn" onclick="verMapaCompleto()">
+                        📍 Ver Mapa Completo
+                    </button>
+                </div>
+            </div>
+            
+            <!-- SECCIÓN MUNICIPIOS -->
+            <div id="municipios" class="seccion" style="display: none;">
+                <div class="card">
+                    <h2 class="card-title">🏘️ TODOS LOS MUNICIPIOS</h2>
+                    <div id="lista-municipios">
+                        <!-- Municipios se cargarán aquí -->
+                    </div>
+                    
+                    <h3 style="margin-top: 20px;">🔍 BUSCAR MUNICIPIO</h3>
+                    <input type="text" id="buscar-municipio" placeholder="Escribe nombre o código postal..." 
+                           style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #e2e8f0; border-radius: 8px;">
+                    <button class="btn" onclick="buscarMunicipio()">
+                        🔍 Buscar Municipio
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <h2 class="card-title">🎯 OPORTUNIDADES POR ZONA</h2>
+                    <div class="alerta-robo">
+                        <strong>ZONA NORTE (Córdoba Capital)</strong><br>
+                        • 12 robos esta semana<br>
+                        • 8 negocios nuevos<br>
+                        • Prioridad: ALTA
+                    </div>
+                    <div style="background: #f0fff4; padding: 15px; border-radius: 8px; margin-top: 10px;">
+                        <strong>SUBETICA (Lucena, Priego, Cabra)</strong><br>
+                        • 6 robos esta semana<br>
+                        • 4 comunidades interesadas<br>
+                        • Prioridad: MEDIA
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SECCIÓN AGENDA -->
+            <div id="agenda" class="seccion" style="display: none;">
+                <div class="card">
+                    <h2 class="card-title">📅 AGENDA DE VISITAS</h2>
+                    <div id="lista-agenda">
+                        <!-- Eventos de agenda se cargarán aquí -->
+                    </div>
+                    
+                    <h3 style="margin-top: 20px;">➕ NUEVA VISITA</h3>
+                    <input type="text" id="nueva-visita" placeholder="Cliente/Negocio" 
+                           style="width: 100%; padding: 12px; margin: 5px 0; border: 2px solid #e2e8f0; border-radius: 8px;">
+                    <input type="date" id="fecha-visita" 
+                           style="width: 100%; padding: 12px; margin: 5px 0; border: 2px solid #e2e8f0; border-radius: 8px;">
+                    <textarea id="detalles-visita" placeholder="Detalles..." rows="3"
+                              style="width: 100%; padding: 12px; margin: 5px 0; border: 2px solid #e2e8f0; border-radius: 8px;"></textarea>
+                    <button class="btn" onclick="agregarVisita()">
+                        ✅ Agregar a Agenda
+                    </button>
+                </div>
+            </div>
+            
+            <!-- SECCIÓN NOTAS -->
+            <div id="notas" class="seccion" style="display: none;">
+                <div class="card">
+                    <h2 class="card-title">📝 BLOC DE NOTAS</h2>
+                    <div id="lista-notas">
+                        <!-- Notas se cargarán aquí -->
+                    </div>
+                    
+                    <h3 style="margin-top: 20px;">➕ NUEVA NOTA</h3>
+                    <input type="text" id="titulo-nota" placeholder="Título de la nota" 
+                           style="width: 100%; padding: 12px; margin: 5px 0; border: 2px solid #e2e8f0; border-radius: 8px;">
+                    <textarea id="contenido-nota" placeholder="Escribe tu nota aquí..." rows="4"
+                              style="width: 100%; padding: 12px; margin: 5px 0; border: 2px solid #e2e8f0; border-radius: 8px;"></textarea>
+                    <button class="btn" onclick="agregarNota()">
+                        💾 Guardar Nota
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- FOOTER -->
+        <div style="background: #2d3748; color: #cbd5e0; padding: 20px; text-align: center; margin-top: 20px;">
+            <p>LOCALIZADOR DE VENTAS DE ALARMAS © 2024</p>
+            <p style="font-size: 0.9rem;">Sistema profesional para la provincia de Córdoba</p>
+            <p style="font-size: 0.8rem;" id="ultima-actualizacion">Última actualización: --:--</p>
+        </div>
+        
+        <!-- NOTIFICACIÓN -->
+        <div class="notificacion" id="notificacion">
+            <strong id="notificacion-titulo">Nueva alerta</strong>
+            <p id="notificacion-mensaje">Mensaje de notificación</p>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // ===== DATOS INICIALES =====
+        const municipiosCordoba = [
+            { nombre: "CÓRDOBA", robos: 12, oportunidades: 15, prioridad: "alta" },
+            { nombre: "LUCENA", robos: 8, oportunidades: 10, prioridad: "alta" },
+            { nombre: "PUENTE GENIL", robos: 6, oportunidades: 8, prioridad: "media" },
+            { nombre: "MONTILLA", robos: 5, oportunidades: 7, prioridad: "media" },
+            { nombre: "PRIEGO", robos: 4, oportunidades: 6, prioridad: "media" },
+            { nombre: "CABRA", robos: 3, oportunidades: 5, prioridad: "baja" },
+            { nombre: "BAENA", robos: 3, oportunidades: 4, prioridad: "baja" },
+            { nombre: "FERNÁN-NÚÑEZ", robos: 2, oportunidades: 3, prioridad: "baja" }
+        ];
+        
+        let robos = [];
+        let agenda = [];
+        let notas = [];
+        
+        // ===== INICIALIZAR APP =====
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarDatosIniciales();
+            actualizarHora();
+            iniciarActualizaciones();
+            mostrarNotificacion('✅ Sistema activo', 'Monitoreando toda la provincia de Córdoba');
+        });
+        
+        // ===== FUNCIONES PRINCIPALES =====
+        function mostrarSeccion(seccion) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.seccion').forEach(s => {
+                s.style.display = 'none';
+            });
+            
+            // Remover active de todas las pestañas
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            
+            // Mostrar sección seleccionada
+            document.getElementById(seccion).style.display = 'block';
+            
+            // Marcar pestaña como activa
+            event.target.classList.add('active');
+            
+            // Si es la sección de municipios, cargarlos
+            if (seccion === 'municipios') {
+                cargarMunicipios();
+            }
+            
+            // Si es la sección de agenda, cargarla
+            if (seccion === 'agenda') {
+                cargarAgenda();
+            }
+            
+            // Si es la sección de notas, cargarlas
+            if (seccion === 'notas') {
+                cargarNotas();
+            }
+        }
+        
+        function cargarDatosIniciales() {
+            // Datos iniciales de robos
+            robos = [
+                {
+                    id: 1,
+                    municipio: "CÓRDOBA",
+                    zona: "Centro Histórico",
+                    tipo: "Robo en vivienda",
+                    direccion: "Calle Claudio Marcelo, 25",
+                    tiempo: "Hace 2 horas",
+                    detalles: "Robo con fuerza. Se llevaron electrónica."
+                },
+                {
+                    id: 2,
+                    municipio: "LUCENA",
+                    zona: "Polígono Industrial",
+                    tipo: "Intento de robo",
+                    direccion: "Calle Industria, 12",
+                    tiempo: "Hace 4 horas",
+                    detalles: "Intento fallido. Detectado por vecinos."
+                },
+                {
+                    id: 3,
+                    municipio: "PUENTE GENIL",
+                    zona: "Centro Comercial",
+                    tipo: "Robo en comercio",
+                    direccion: "Avenida de Andalucía, 8",
+                    tiempo: "Hace 6 horas",
+                    detalles: "Robo en joyería. Pérdidas considerables."
+                }
+            ];
+            
+            // Cargar datos iniciales
+            actualizarListaRobos();
+            actualizarEstadisticas();
+            cargarMunicipios();
+            cargarAgenda();
+            cargarNotas();
+        }
+        
+        function actualizarListaRobos() {
+            const lista = document.getElementById('lista-robos');
+            lista.innerHTML = '';
+            
+            if (robos.length === 0) {
+                lista.innerHTML = '<p style="text-align: center; color: #718096;">No hay robos reportados</p>';
+                return;
+            }
+            
+            robos.forEach(robo => {
+                const alerta = document.createElement('div');
+                alerta.className = 'alerta-robo';
+                alerta.innerHTML = `
+                    <strong>🚨 ${robo.municipio} - ${robo.zona}</strong><br>
+                    ${robo.tipo}<br>
+                    <small>📍 ${robo.direccion}</small><br>
+                    <div class="tiempo">⏰ ${robo.tiempo}</div>
+                    ${robo.detalles ? `<small>📝 ${robo.detalles}</small>` : ''}
+                `;
+                lista.appendChild(alerta);
+            });
+        }
+        
+        function cargarMunicipios() {
+            const lista = document.getElementById('lista-municipios');
+            lista.innerHTML = '';
+            
+            municipiosCordoba.forEach(municipio => {
+                const div = document.createElement('div');
+                div.style.cssText = `
+                    background: ${municipio.prioridad === 'alta' ? '#fed7d7' : municipio.prioridad === 'media' ? '#feebc8' : '#c6f6d5'};
+                    color: ${municipio.prioridad === 'alta' ? '#9b2c2c' : municipio.prioridad === 'media' ? '#744210' : '#22543d'};
+                    padding: 12px;
+                    margin: 8px 0;
+                    border-radius: 8px;
+                    border-left: 4px solid ${municipio.prioridad === 'alta' ? '#c53030' : municipio.prioridad === 'media' ? '#d69e2e' : '#38a169'};
+                `;
+                div.innerHTML = `
+                    <strong>${municipio.nombre}</strong><br>
+                    🔴 ${municipio.robos} robos esta semana | 
+                    🟢 ${municipio.oportunidades} oportunidades<br>
+                    <small>Prioridad: ${municipio.prioridad.toUpperCase()}</small>
+                `;
+                lista.appendChild(div);
+            });
+        }
+        
+        function cargarAgenda() {
+            const lista = document.getElementById('lista-agenda');
+            
+            // Datos de ejemplo para agenda
+            agenda = [
+                {
+                    id: 1,
+                    cliente: "Restaurante La Alhambra",
+                    municipio: "Córdoba",
+                    fecha: "Hoy - 10:00",
+                    detalles: "Presentación presupuesto sistema completo"
+                },
+                {
+                    id: 2,
+                    cliente: "Ferretería López",
+                    municipio: "Lucena",
+                    fecha: "Hoy - 12:30",
+                    detalles: "Instalación básica + mantenimiento"
+                },
+                {
+                    id: 3,
+                    cliente: "Comunidad de vecinos",
+                    municipio: "Puente Genil",
+                    fecha: "Mañana - 16:00",
+                    detalles: "Reunión para sistema comunitario"
+                }
+            ];
+            
+            lista.innerHTML = '';
+            agenda.forEach(evento => {
+                const div = document.createElement('div');
+                div.className = 'evento-agenda';
+                div.innerHTML = `
+                    <strong>📅 ${evento.cliente}</strong><br>
+                    <small>📍 ${evento.municipio} | ⏰ ${evento.fecha}</small><br>
+                    ${evento.detalles}
+                `;
+                lista.appendChild(div);
+            });
+        }
+        
+        function cargarNotas() {
+            const lista = document.getElementById('lista-notas');
+            
+            // Datos de ejemplo para notas
+            notas = [
+                {
+                    id: 1,
+                    titulo: "Recordatorio importante",
+                    contenido: "Ofrecer mantenimiento anual a todos los clientes nuevos",
+                    fecha: "Hoy"
+                },
+                {
+                    id: 2,
+                    titulo: "Ideas para mejorar",
+                    contenido: "Crear paquete especial para comunidades de vecinos con descuento",
+                    fecha: "Ayer"
+                }
+            ];
+            
+            lista.innerHTML = '';
+            notas.forEach(nota => {
+                const div = document.createElement('div');
+                div.className = 'nota';
+                div.innerHTML = `
+                    <strong>${nota.titulo}</strong><br>
+                    ${nota.contenido}<br>
+                    <small style="color: #718096;">📝 ${nota.fecha}</small>
+                `;
+                lista.appendChild(div);
+            });
+        }
+        
+        function actualizarEstadisticas() {
+            document.getElementById('total-robos').textContent = robos.length;
+            
+            const totalOportunidades = municipiosCordoba.reduce((total, m) => total + m.oportunidades, 0);
+            document.getElementById('total-oportunidades').textContent = totalOportunidades;
+        }
+        
+        // ===== FUNCIONALIDADES =====
+        function simularRobo() {
+            const municipios = ["CÓRDOBA", "LUCENA", "PUENTE GENIL", "MONTILLA", "PRIEGO", "CABRA"];
+            const tipos = ["Robo en vivienda", "Robo en comercio", "Intento de robo", "Vandalismo"];
+            const zonas = ["Centro", "Polígono Industrial", "Barriada Norte", "Zona Comercial"];
+            
+            const municipio = municipios[Math.floor(Math.random() * municipios.length)];
+            const tipo = tipos[Math.floor(Math.random() * tipos.length)];
+            const zona = zonas[Math.floor(Math.random() * zonas.length)];
+            
+            const nuevoRobo = {
+                id: Date.now(),
+                municipio: municipio,
+                zona: zona,
+                tipo: tipo,
+                direccion: `Calle ${['Mayor', 'Real', 'Nueva', 'Sol'][Math.floor(Math.random() * 4)]}, ${Math.floor(Math.random() * 100)}`,
+                tiempo: 'Ahora mismo',
+                detalles: 'Incidente reportado por vecinos. Policía notificada.'
+            };
+            
+            robos.unshift(nuevoRobo);
+            actualizarListaRobos();
+            actualizarEstadisticas();
+            
+            // Mostrar notificación con sonido
+            mostrarNotificacion('🚨 NUEVO ROBO REPORTADO', `${tipo} en ${municipio} - ${zona}`);
+            
+            // Reproducir sonido de alerta
+            reproducirSonidoAlerta();
+            
+            // Vibrar si está disponible
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
+            }
+        }
+        
+        function buscarMunicipio() {
+            const busqueda = document.getElementById('buscar-municipio').value.toUpperCase();
+            
+            if (!busqueda) {
+                cargarMunicipios();
+                return;
+            }
+            
+            const resultados = municipiosCordoba.filter(m => 
+                m.nombre.includes(busqueda)
+            );
+            
+            const lista = document.getElementById('lista-municipios');
+            lista.innerHTML = '';
+            
+            if (resultados.length === 0) {
+                lista.innerHTML = '<p style="text-align: center; color: #718096;">No se encontraron municipios</p>';
+                return;
+            }
+            
+            resultados.forEach(municipio => {
+                const div = document.createElement('div');
+                div.style.cssText = `
+                    background: ${municipio.prioridad === 'alta' ? '#fed7d7' : municipio.prioridad === 'media' ? '#feebc8' : '#c6f6d5'};
+                    color: ${municipio.prioridad === 'alta' ? '#9b2c2c' : municipio.prioridad === 'media' ? '#744210' : '#22543d'};
+                    padding: 12px;
+                    margin: 8px 0;
+                    border-radius: 8px;
+                    border-left: 4px solid ${municipio.prioridad === 'alta' ? '#c53030' : municipio.prioridad === 'media' ? '#d69e2e' : '#38a169'};
+                `;
+                div.innerHTML = `
+                    <strong>🔍 ${municipio.nombre}</strong><br>
+                    🔴 ${municipio.robos} robos esta semana | 
+                    🟢 ${municipio.oportunidades} oportunidades<br>
+                    <small>Prioridad: ${municipio.prioridad.toUpperCase()}</small>
+                `;
+                lista.appendChild(div);
+            });
+        }
+        
+        function agregarVisita() {
+            const cliente = document.getElementById('nueva-visita').value;
+            const fecha = document.getElementById('fecha-visita').value;
+            const detalles = document.getElementById('detalles-visita').value;
+            
+            if (!cliente) {
+                alert('Por favor, introduce el nombre del cliente/negocio');
+                return;
+            }
+            
+            const nuevaVisita = {
+                id: Date.now(),
+                cliente: cliente,
+                municipio: "Córdoba", // Podría seleccionarse
+                fecha: fecha ? new Date(fecha).toLocaleDateString() : 'Hoy',
+                detalles: detalles
+            };
+            
+            agenda.unshift(nuevaVisita);
+            cargarAgenda();
+            
+            mostrarNotificacion('✅ Visita agendada', `${cliente} añadido a la agenda`);
+            
+            // Limpiar formulario
+            document.getElementById('nueva-visita').value = '';
+            document.getElementById('fecha-visita').value = '';
+            document.getElementById('detalles-visita').value = '';
+        }
+        
+        function agregarNota() {
+            const titulo = document.getElementById('titulo-nota').value;
+            const contenido = document.getElementById('contenido-nota').value;
+            
+            if (!titulo || !contenido) {
+                alert('Por favor, completa título y contenido');
+                return;
+            }
+            
+            const nuevaNota = {
+                id: Date.now(),
+                titulo: titulo,
+                contenido: contenido,
+                fecha: new Date().toLocaleDateString()
+            };
+            
+            notas.unshift(nuevaNota);
+            cargarNotas();
+            
+            mostrarNotificacion('📝 Nota guardada', 'Tu nota se ha guardado correctamente');
+            
+            // Limpiar formulario
+            document.getElementById('titulo-nota').value = '';
+            document.getElementById('contenido-nota').value = '';
+        }
+        
+        function verMapaCompleto() {
+            alert('🗺️ Mapa completo de la provincia de Córdoba\n\nMostrando:\n• Todos los municipios\n• Robos reportados\n• Oportunidades de venta\n• Zonas prioritarias');
+        }
+        
+        // ===== SISTEMA =====
+        function actualizarHora() {
+            const ahora = new Date();
+            const hora = ahora.getHours().toString().padStart(2, '0');
+            const minutos = ahora.getMinutes().toString().padStart(2, '0');
+            document.getElementById('hora-actual').textContent = `${hora}:${minutos}`;
+            
+            document.getElementById('ultima-actualizacion').textContent = 
+                `Última actualización: ${hora}:${minutos}`;
+            
+            // Actualizar cada minuto
+            setTimeout(actualizarHora, 60000);
+        }
+        
+        function iniciarActualizaciones() {
+            // Simular nuevos robos automáticamente
+            setInterval(() => {
+                if (Math.random() > 0.7) { // 30% de probabilidad
+                    simularRobo();
+                }
+            }, 300000); // Cada 5 minutos
+            
+            // Actualizar estadísticas cada minuto
+            setInterval(actualizarEstadisticas, 60000);
+        }
+        
+        function mostrarNotificacion(titulo, mensaje) {
+            const notificacion = document.getElementById('notificacion');
+            const tituloElem = document.getElementById('notificacion-titulo');
+            const mensajeElem = document.getElementById('notificacion-mensaje');
+            
+            tituloElem.textContent = titulo;
+            mensajeElem.textContent = mensaje;
+            notificacion.style.display = 'block';
+            
+            // Ocultar después de 4 segundos
+            setTimeout(() => {
+                notificacion.style.display = 'none';
+            }, 4000);
+        }
+        
+        function reproducirSonidoAlerta() {
+            try {
+                // Crear sonido simple
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 1000;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (e) {
+                console.log('Sonido no disponible');
+            }
+        }
+        
+        // Detectar cambios de conexión
+        window.addEventListener('online', () => {
+            document.getElementById('estado-conexion').textContent = '✅ Conectado';
+        });
+        
+        window.addEventListener('offline', () => {
+            document.getElementById('estado-conexion').textContent = '⚠️ Offline';
+        });
+    </script>
 </body>
 </html>
