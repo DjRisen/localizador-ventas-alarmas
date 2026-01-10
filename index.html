@@ -567,5 +567,221 @@ https://maps.google.com/?q=${robo.coordenadas.lat},${robo.coordenadas.lng}`;
         
         console.log("✅ JavaScript cargado correctamente");
     </script>
+    // ===== CONFIGURACIÓN EMAILJS =====
+// Configuración ACTUALIZADA para EmailJS
+const EMAILJS_CONFIG = {
+    PUBLIC_KEY: 'user_xxxxxxxxxxxx', // REEMPLAZA con tu Public Key
+    SERVICE_ID: 'service_xxxxxxxx', // REEMPLAZA con tu Service ID
+    TEMPLATE_ID: 'template_xxxxxxx' // REEMPLAZA con tu Template ID
+};
+
+// Variables globales
+let mapa;
+let marcadores = [];
+let robos = [];
+let agenda = [];
+let notas = [];
+let notificaciones = [];
+let alertasEnviadas = [];
+let miUbicacionMarker;
+let watchId;
+
+// Configuración de alertas
+let configAlertas = {
+    correo: "avisosderobos@gmail.com",
+    whatsapp: "621284357",
+    alertaRobo: true,
+    alertaVisita: false,
+    alertaOportunidad: true,
+    alertaRecordatorio: false
+};
+
+// ===== INICIALIZACIÓN EMAILJS =====
+function inicializarEmailJS() {
+    // Inicializar EmailJS con tu clave pública
+    if (EMAILJS_CONFIG.PUBLIC_KEY && EMAILJS_CONFIG.PUBLIC_KEY !== 'user_xxxxxxxxxxxx') {
+        emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+        console.log("✅ EmailJS inicializado correctamente");
+        return true;
+    } else {
+        console.log("⚠️ EmailJS no configurado. Usando método alternativo.");
+        return false;
+    }
+}
+
+// ===== FUNCIÓN MEJORADA PARA ENVIAR CORREOS =====
+async function enviarAlertaCorreoCompleta(robo) {
+    try {
+        // Verificar que EmailJS esté configurado
+        if (!EMAILJS_CONFIG.PUBLIC_KEY || EMAILJS_CONFIG.PUBLIC_KEY === 'user_xxxxxxxxxxxx') {
+            mostrarNotificacion('⚠️ Configura EmailJS', 'Configura EmailJS para recibir correos automáticos');
+            enviarCorreoAlternativo(robo);
+            return;
+        }
+
+        // Preparar los datos para la plantilla
+        const templateParams = {
+            to_email: configAlertas.correo,
+            direccion: robo.direccion,
+            municipio: robo.municipio,
+            prioridad: robo.prioridad.toUpperCase(),
+            fecha: new Date(robo.fecha).toLocaleString('es-ES'),
+            coordenadas: `${robo.coordenadas.lat.toFixed(6)}, ${robo.coordenadas.lng.toFixed(6)}`,
+            lat: robo.coordenadas.lat,
+            lng: robo.coordenadas.lng,
+            detalles: robo.detalles,
+            tipo: robo.tipo,
+            zona: robo.zona,
+            codigo_postal: robo.codigoPostal
+        };
+
+        console.log("📧 Enviando correo con datos:", templateParams);
+
+        // Enviar correo usando EmailJS
+        const response = await emailjs.send(
+            EMAILJS_CONFIG.SERVICE_ID,
+            EMAILJS_CONFIG.TEMPLATE_ID,
+            templateParams
+        );
+
+        if (response.status === 200) {
+            console.log('✅ Correo enviado exitosamente:', response);
+            
+            // Registrar en historial
+            registrarAlertaEnviada({
+                tipo: 'correo',
+                destinatario: configAlertas.correo,
+                titulo: `🚨 Alerta: ${robo.municipio}`,
+                mensaje: robo.detalles,
+                fecha: new Date(),
+                estado: 'enviado'
+            });
+
+            mostrarNotificacion('📧 Correo enviado', 'La alerta se ha enviado correctamente a tu correo');
+            return true;
+        } else {
+            throw new Error('Error en respuesta de EmailJS');
+        }
+
+    } catch (error) {
+        console.error('❌ Error al enviar correo:', error);
+        
+        // Registrar error
+        registrarAlertaEnviada({
+            tipo: 'correo',
+            destinatario: configAlertas.correo,
+            titulo: `🚨 Alerta: ${robo.municipio}`,
+            mensaje: robo.detalles,
+            fecha: new Date(),
+            estado: 'error'
+        });
+
+        // Usar método alternativo
+        enviarCorreoAlternativo(robo);
+        return false;
+    }
+}
+
+// ===== MÉTODO ALTERNATIVO (mailto:) =====
+function enviarCorreoAlternativo(robo) {
+    const asunto = `🚨 ALERTA DE ROBO: ${robo.municipio}`;
+    const cuerpo = `
+SISTEMA DE ALERTAS DE ROBOS
+============================
+
+📍 DIRECCIÓN: ${robo.direccion}
+🏘️ MUNICIPIO: ${robo.municipio}
+🎯 ZONA: ${robo.zona}
+🔴 PRIORIDAD: ${robo.prioridad.toUpperCase()}
+🚨 TIPO: ${robo.tipo}
+🕒 FECHA/HORA: ${new Date(robo.fecha).toLocaleString('es-ES')}
+📝 DETALLES: ${robo.detalles}
+🎯 COORDENADAS: ${robo.coordenadas.lat.toFixed(6)}, ${robo.coordenadas.lng.toFixed(6)}
+📮 CÓDIGO POSTAL: ${robo.codigoPostal}
+
+🗺️ VER EN GOOGLE MAPS:
+https://www.google.com/maps?q=${robo.coordenadas.lat},${robo.coordenadas.lng}
+
+📱 WHATSAPP INMEDIATO:
+https://wa.me/621284357?text=Alerta%20de%20robo%20en%20${encodeURIComponent(robo.municipio)}%20-%20${encodeURIComponent(robo.direccion)}
+
+============================
+Sistema Automático de Alertas
+avisosderobos@gmail.com
+`;
+
+    const mailtoLink = `mailto:${configAlertas.correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+    
+    // Abrir cliente de correo
+    window.open(mailtoLink, '_blank');
+    
+    mostrarNotificacion('📧 Correo listo', 'Se ha abierto tu cliente de correo con todos los datos');
+}
+
+// ===== FUNCIÓN COMPLETA DE ALERTA =====
+async function enviarAlertaCompleta(roboId) {
+    const robo = robos.find(r => r.id == roboId);
+    
+    if (!robo) {
+        mostrarNotificacion('❌ Error', 'No se encontró el robo para enviar alerta');
+        return;
+    }
+
+    // Enviar por EmailJS (correo automático)
+    const correoEnviado = await enviarAlertaCorreoCompleta(robo);
+    
+    // Enviar por WhatsApp
+    enviarAlertaWhatsAppCompleta(robo);
+    
+    // Marcar como notificado
+    robo.notificado = true;
+    
+    // Actualizar estadísticas
+    actualizarEstadisticas();
+    
+    if (correoEnviado) {
+        mostrarNotificacion('✅ Alertas enviadas', 'Correo y WhatsApp enviados correctamente');
+    }
+}
+
+// ===== WHATSAPP COMPLETO =====
+function enviarAlertaWhatsAppCompleta(robo) {
+    const numero = configAlertas.whatsapp.replace(/\D/g, '');
+    
+    const mensaje = `🚨 *ALERTA DE ROBO* 🚨
+
+📍 *Dirección:* ${robo.direccion}
+🏘️ *Municipio:* ${robo.municipio}
+🎯 *Zona:* ${robo.zona}
+🔴 *Prioridad:* ${robo.prioridad.toUpperCase()}
+🚨 *Tipo:* ${robo.tipo}
+🕒 *Fecha/Hora:* ${new Date(robo.fecha).toLocaleString('es-ES')}
+📝 *Detalles:* ${robo.detalles}
+🎯 *Coordenadas:* ${robo.coordenadas.lat.toFixed(6)}, ${robo.coordenadas.lng.toFixed(6)}
+📮 *Código Postal:* ${robo.codigoPostal}
+
+🗺️ *Google Maps:*
+https://maps.google.com/?q=${robo.coordenadas.lat},${robo.coordenadas.lng}
+
+⚠️ *ACCIONES INMEDIATAS:*
+1. Verificar ubicación en mapa
+2. Contactar con afectados
+3. Programar visita comercial
+4. Ofrecer sistema de seguridad`;
+
+    const mensajeCodificado = encodeURIComponent(mensaje);
+    const whatsappLink = `https://wa.me/${numero}?text=${mensajeCodificado}`;
+    
+    window.open(whatsappLink, '_blank');
+    
+    registrarAlertaEnviada({
+        tipo: 'whatsapp',
+        destinatario: configAlertas.whatsapp,
+        titulo: 'Alerta por WhatsApp',
+        mensaje: robo.direccion,
+        fecha: new Date(),
+        estado: 'enviado'
+    });
+}
 </body>
 </html>
