@@ -213,9 +213,9 @@ def enviar_correo_emailjs(destinatario, asunto, mensaje):
     """
     try:
         # EmailJS - Configura en emailjs.com
-        service_id = "service_xxxxxx"  # Tu Service ID
-        template_id = "template_xxxxxx"  # Tu Template ID
-        user_id = "user_xxxxxx"  # Tu Public Key
+        service_id = "service_pqe8m9c"  # Tu Service ID
+        template_id = "template_zce7mqn"  # Tu Template ID
+        user_id = "oWs_C9225ZOmdBpyU"  # Tu Public Key
         
         url = "https://api.emailjs.com/api/v1.0/email/send"
         
