@@ -57,7 +57,7 @@ function mostrarAlertaRobo(pueblo, tipo) {
  * EMAIL
  ************************/
 function enviarCorreoRobo(pueblo, tipo) {
-  emailjs.send("TU_SERVICE_ID", "TU_TEMPLATE_ID", {
+  emailjs.send("service_pqe8m9c", "template_zce7mqn", {
     pueblo: pueblo,
     tipo: tipo,
     hora: new Date().toLocaleString("es-ES")
