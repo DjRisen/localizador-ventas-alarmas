@@ -50,7 +50,17 @@ CONFIG = {
         "Cabra", "Baena", "La Carlota", "Fernán-Núñez",
         "Villanueva de Córdoba", "Aguilar de la Frontera",
         "Rute", "Palma del Río", "Posadas", "Almodóvar del Río",
-        "Bujalance", "Castro del Río", "Espejo", "Santaella"
+        "Bujalance", "Castro del Río", "Espejo", "Santaella", 
+        "Doña Mencia", "Zuheros", "Luque", "Zamorano", "Zagrilla",
+        "Nueva Carteya", "Espejo", "Encina Reales", "Benameji", 
+        "Pozoblanco", "Adamuz", "Belalcázar", "Belmez", "Bujalance",
+        "Los Blázquez", " Cañete de las Torres", "Carcabuey", "Cardeña",
+        "Conquista", "El Carpio", "Conquista", "Dos Torres", "Espiel",
+        "Fuente Carreteros", "Fuente la Lancha", "Fuente Obejuna", "Fuente-Tójar",
+        "La Granjuela", "Guadalcázar", "Hinojosa del Duque", "Hornachuelos",
+        "Iznájar", "La Guijarrosa", "El Guijo", "Montalbán de Córdoba",
+        "Montemayor", "Montoro", "Monturque", "Moriles", "Obejo", "Palenciana",
+        "Pedro Abad", "Pedroche", "Peñarroya-Pueblonuevo", 
     ]
 }
 
@@ -62,7 +72,7 @@ def verificar_configuracion():
     """Verifica que la configuración sea válida"""
     errores = []
     
-    if not CONFIG["EMAIL_DESTINO"]:
+    if not CONFIG["avisosderobos@gmail.com"]:
         errores.append("EMAIL_DESTINO no configurado")
     
     if not CONFIG["EMAIL_REMITENTE"]:
