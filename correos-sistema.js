@@ -1,55 +1,62 @@
 // ============================================
-// SISTEMA DE CORREOS AUTOMÁTICOS - CON TUS CLAVES
+// SISTEMA DE CORREOS AUTOMÁTICOS PARA LOCALIZADOR DE ALARMAS
+// Versión 1.0 - Con tus credenciales reales de EmailJS
 // ============================================
 
-// TUS CREDENCIALES REALES DE EMAILJS
-const EMAILJS_CREDENCIALES = {
+// TUS CREDENCIALES DE EMAILJS (NO MODIFICAR)
+const EMAILJS_CONFIG = {
     USER_ID: "oWs_C9225ZOmdBpyU",          // Tu User ID
     SERVICE_ID: "service_pqe8m9c",         // Tu Service ID
     TEMPLATE_ID: "template_zce7mqn",       // Tu Template ID
     EMAIL_DESTINO: "avisosderobos@gmail.com",
-    TU_TELEFONO: "621284357"
+    TU_TELEFONO: "621284357",
+    APP_URL: "https://djrisen.github.io/localizador-ventas-alarmas/"
 };
 
 // ============================================
-// 1. INICIALIZACIÓN AUTOMÁTICA
+// 1. INICIALIZACIÓN DEL SISTEMA
 // ============================================
 
-console.log("🚀 Cargando sistema de correos automáticos...");
+console.log("🚀 Iniciando sistema de correos automáticos...");
 
-// Función para inicializar EmailJS
-function inicializarEmailJS() {
-    // Crear script de EmailJS si no existe
+// Cargar EmailJS automáticamente
+(function cargarEmailJS() {
     if (typeof emailjs === 'undefined') {
         const script = document.createElement('script');
         script.src = 'https://cdn.emailjs.com/dist/email.min.js';
         script.onload = function() {
-            console.log("✅ EmailJS cargado");
-            configurarEmailJS();
+            console.log("✅ EmailJS cargado correctamente");
+            inicializarSistemaCorreos();
+        };
+        script.onerror = function() {
+            console.error("❌ Error cargando EmailJS");
         };
         document.head.appendChild(script);
     } else {
-        configurarEmailJS();
+        inicializarSistemaCorreos();
     }
-}
+})();
 
-// Configurar EmailJS con tus credenciales
-function configurarEmailJS() {
+// Inicializar el sistema
+function inicializarSistemaCorreos() {
     try {
-        emailjs.init(EMAILJS_CREDENCIALES.USER_ID);
-        console.log("✅ EmailJS configurado con User ID:", EMAILJS_CREDENCIALES.USER_ID);
-        console.log("✅ Service ID:", EMAILJS_CREDENCIALES.SERVICE_ID);
-        console.log("✅ Template ID:", EMAILJS_CREDENCIALES.TEMPLATE_ID);
-        console.log("✅ Correo destino:", EMAILJS_CREDENCIALES.EMAIL_DESTINO);
+        // Configurar EmailJS con tu User ID
+        emailjs.init(EMAILJS_CONFIG.USER_ID);
+        console.log("✅ EmailJS configurado con User ID:", EMAILJS_CONFIG.USER_ID.substring(0, 10) + "...");
         
-        // Conectar con tu app
-        conectarConTuApp();
+        // Conectar con tu aplicación
+        conectarConAppLocalizador();
         
-        // Probar conexión
-        setTimeout(probarConexion, 2000);
+        // Activar observadores
+        activarObservadoresRobos();
+        
+        // Probar conexión automáticamente
+        setTimeout(probarConexionAutomatica, 3000);
+        
+        console.log("🎯 Sistema de correos listo. Esperando robos...");
         
     } catch (error) {
-        console.error("❌ Error configurando EmailJS:", error);
+        console.error("❌ Error inicializando sistema de correos:", error);
     }
 }
 
@@ -57,14 +64,14 @@ function configurarEmailJS() {
 // 2. FUNCIÓN PRINCIPAL DE ENVÍO
 // ============================================
 
-function enviarAlertaAutomatica(datosRobo) {
-    console.log("📧 ENVIANDO ALERTA AUTOMÁTICA...");
+function enviarAlertaCorreoAutomatica(datosRobo) {
+    console.log("📧 ENVIANDO ALERTA AUTOMÁTICA:", datosRobo);
     
-    // Datos que se enviarán (completos)
+    // Completar datos faltantes
     const datosCompletos = {
-        to_email: EMAILJS_CREDENCIALES.EMAIL_DESTINO,
+        to_email: EMAILJS_CONFIG.EMAIL_DESTINO,
         
-        // Información del robo
+        // Fecha y hora
         fecha: new Date().toLocaleDateString('es-ES', {
             day: '2-digit',
             month: '2-digit',
@@ -72,39 +79,38 @@ function enviarAlertaAutomatica(datosRobo) {
         }),
         hora: new Date().toLocaleTimeString('es-ES', {
             hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
+            minute: '2-digit'
         }),
         fecha_hora: new Date().toLocaleString('es-ES'),
         
-        // Datos del incidente (con valores por defecto)
+        // Datos del robo (con valores por defecto)
         poblacion: datosRobo.poblacion || datosRobo.municipio || "Córdoba",
         ubicacion: datosRobo.direccion || datosRobo.ubicacion || "Ubicación no especificada",
         situacion: datosRobo.tipo || datosRobo.situacion || "Alerta de robo",
-        prioridad: datosRobo.prioridad || "ALTA",
+        prioridad: datosRobo.prioridad || "MEDIA",
         detalles: datosRobo.detalles || datosRobo.descripcion || 
-                 "Reportado a través del sistema Localizador de Alarmas",
+                 "Incidente reportado a través del sistema Localizador de Alarmas",
         coordenadas: datosRobo.coordenadas || datosRobo.gps || "No disponibles",
         
         // Información de contacto
-        telefono_contacto: EMAILJS_CREDENCIALES.TU_TELEFONO,
-        enlace_aplicacion: "https://djrisen.github.io/localizador-ventas-alarmas/",
+        telefono_contacto: EMAILJS_CONFIG.TU_TELEFONO,
+        enlace_aplicacion: EMAILJS_CONFIG.APP_URL,
         
-        // Para el mapa
+        // Enlace a Google Maps
         enlace_mapa: datosRobo.coordenadas ? 
             `https://www.google.com/maps?q=${datosRobo.coordenadas}` :
-            `https://www.google.com/maps/search/${encodeURIComponent(datosRobo.direccion || "Córdoba España")}`,
-            
-        // Identificador único
+            `https://www.google.comaps/search/${encodeURIComponent(datosRobo.direccion || "Córdoba")}`,
+        
+        // ID único de alerta
         id_alerta: "ALERTA_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6)
     };
     
-    console.log("📋 Datos preparados para enviar:", datosCompletos);
+    console.log("📋 Datos preparados para EmailJS:", datosCompletos);
     
-    // ENVIAR CORREO con EmailJS
+    // Enviar correo usando EmailJS
     emailjs.send(
-        EMAILJS_CREDENCIALES.SERVICE_ID,
-        EMAILJS_CREDENCIALES.TEMPLATE_ID,
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID,
         datosCompletos
     )
     .then(function(response) {
@@ -114,73 +120,66 @@ function enviarAlertaAutomatica(datosRobo) {
             hora: new Date().toLocaleTimeString()
         });
         
-        // Mostrar notificación
-        mostrarNotificacionExito();
+        // Mostrar notificación en pantalla
+        mostrarNotificacion('📧 Alerta enviada por correo automáticamente', 'success');
         
-        // Actualizar contador
-        actualizarContadorEnviados();
+        // Actualizar contador en la interfaz
+        actualizarContadorAlertas();
         
-        // Guardar en historial
+        // Guardar en historial local
         guardarEnHistorial(datosCompletos, true);
         
     }, function(error) {
-        console.error('❌ ERROR ENVIANDO CORREO:', {
-            error: error,
-            hora: new Date().toLocaleTimeString()
-        });
+        console.error('❌ ERROR ENVIANDO CORREO:', error);
         
-        mostrarNotificacionError();
+        mostrarNotificacion('❌ Error enviando correo', 'error');
         guardarEnHistorial(datosCompletos, false);
     });
 }
 
 // ============================================
-// 3. CONEXIÓN CON TU APP EXISTENTE
+// 3. CONEXIÓN CON TU APLICACIÓN LOCALIZADOR
 // ============================================
 
-function conectarConTuApp() {
-    console.log("🔌 Conectando con tu aplicación...");
+function conectarConAppLocalizador() {
+    console.log("🔌 Conectando con Localizador de Alarmas...");
     
-    // OPCIÓN A: Si tu app ya tiene funciones específicas
+    // Opción 1: Si tu app tiene función global para agregar robos
     if (typeof window.agregarRobo === 'function') {
-        console.log("✅ Detectada función 'agregarRobo' - Conectando...");
-        conectarFuncionAgregarRobo();
+        console.log("✅ Detectada función 'agregarRobo' - Interceptando...");
+        interceptarFuncionAgregarRobo();
     }
     
-    // OPCIÓN B: Observar cambios en la interfaz
-    observarInterfaz();
+    // Opción 2: Observar la lista de robos en tiempo real
+    observarListaRobosTiempoReal();
     
-    // OPCIÓN C: Conectar con botones específicos
-    conectarBotones();
+    // Opción 3: Conectar con botones específicos
+    conectarBotonesAlerta();
     
-    // OPCIÓN D: Monitorear formularios
-    monitorearFormularios();
-    
-    console.log("🎯 Sistema listo para enviar correos automáticamente");
+    // Opción 4: Monitorear formularios de reporte
+    monitorearFormulariosReporte();
 }
 
-// Conectar con función existente de agregar robos
-function conectarFuncionAgregarRobo() {
+// Interceptar función existente de agregar robos
+function interceptarFuncionAgregarRobo() {
     const funcionOriginal = window.agregarRobo;
     
     window.agregarRobo = function(...args) {
-        console.log("🔔 Detectado nuevo robo vía función 'agregarRobo'");
+        console.log("🔔 Interceptando nuevo robo agregado...");
         
-        // Ejecutar función original primero
+        // Ejecutar la función original
         const resultado = funcionOriginal.apply(this, args);
         
-        // Extraer datos del robo
+        // Extraer datos del robo de los argumentos
         let datosRobo = {};
         
         if (args.length > 0) {
             if (typeof args[0] === 'object') {
-                // Si es un objeto
-                datosRobo = {...args[0]};
-            } else if (args.length >= 3) {
-                // Si son parámetros separados
+                datosRobo = { ...args[0] };
+            } else if (typeof args[0] === 'string') {
                 datosRobo = {
                     direccion: args[0],
-                    detalles: args[1],
+                    detalles: args[1] || '',
                     prioridad: args[2] || 'MEDIA',
                     poblacion: args[3] || 'Córdoba'
                 };
@@ -190,78 +189,95 @@ function conectarFuncionAgregarRobo() {
         // Añadir timestamp
         datosRobo.timestamp = new Date().toISOString();
         
-        // Enviar correo después de 2 segundos (para que se complete la UI)
+        // Enviar correo después de 1 segundo (para que se complete la UI)
         setTimeout(() => {
-            enviarAlertaAutomatica(datosRobo);
-        }, 2000);
+            enviarAlertaCorreoAutomatica(datosRobo);
+        }, 1000);
         
         return resultado;
     };
 }
 
-// Observar cambios en la interfaz
-function observarInterfaz() {
-    // Buscar contenedores de robos
-    const contenedores = [
+// Observar lista de robos en tiempo real
+function observarListaRobosTiempoReal() {
+    // Buscar contenedor de robos en tu aplicación
+    const selectores = [
         '#robos-lista',
         '.robos-container',
         '#ultimas-alertas',
         '.alertas-container',
         '[data-robos]',
-        '.contenedor-robos'
+        '.contenedor-robos',
+        '.robos-geolocalizados'
     ];
     
-    let contenedorEncontrado = null;
+    let contenedorRobos = null;
     
-    for (const selector of contenedores) {
-        contenedorEncontrado = document.querySelector(selector);
-        if (contenedorEncontrado) {
-            console.log(`✅ Encontrado contenedor: ${selector}`);
+    for (const selector of selectores) {
+        contenedorRobos = document.querySelector(selector);
+        if (contenedorRobos) {
+            console.log(`✅ Encontrado contenedor de robos: ${selector}`);
             break;
         }
     }
     
-    if (contenedorEncontrado) {
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.addedNodes.length > 0) {
-                    mutation.addedNodes.forEach((nodo) => {
-                        if (nodo.nodeType === 1 && !nodo.dataset.alertaProcesada) {
-                            procesarNuevoElemento(nodo);
-                        }
-                    });
-                }
-            });
-        });
-        
-        observer.observe(contenedorEncontrado, {
-            childList: true,
-            subtree: true
-        });
-        
-        console.log("👀 Observador activado para nuevos robos");
+    if (!contenedorRobos) {
+        console.log("⏳ No se encontró contenedor de robos, reintentando en 2 segundos...");
+        setTimeout(observarListaRobosTiempoReal, 2000);
+        return;
     }
+    
+    // Configurar MutationObserver para detectar nuevos robos
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                mutation.addedNodes.forEach(function(nodo) {
+                    if (nodo.nodeType === 1 && !nodo.dataset.correoEnviado) {
+                        procesarNuevoElementoRobo(nodo);
+                    }
+                });
+            }
+        });
+    });
+    
+    // Iniciar observación
+    observer.observe(contenedorRobos, {
+        childList: true,
+        subtree: true
+    });
+    
+    console.log("👀 Observador de robos activado");
 }
 
 // Procesar nuevo elemento de robo
-function procesarNuevoElemento(elemento) {
+function procesarNuevoElementoRobo(elemento) {
     // Marcar como procesado
-    elemento.dataset.alertaProcesada = 'true';
+    elemento.dataset.correoEnviado = 'true';
     
-    // Extraer datos del elemento
+    // Extraer datos del elemento HTML
+    const datosRobo = extraerDatosDeElemento(elemento);
+    
+    // Si tenemos datos suficientes, enviar alerta
+    if (datosRobo.direccion || datosRobo.poblacion) {
+        console.log("🆕 Nuevo robo detectado en la interfaz:", datosRobo);
+        enviarAlertaCorreoAutomatica(datosRobo);
+    }
+}
+
+// Extraer datos de un elemento HTML de robo
+function extraerDatosDeElemento(elemento) {
     const texto = elemento.textContent || elemento.innerText || '';
-    
     const datos = {
         timestamp: new Date().toISOString()
     };
     
-    // Buscar población (ej: "CÓRDOBA • Centro Histórico")
+    // Extraer población (ej: "CÓRDOBA • Centro Histórico")
     const matchPoblacion = texto.match(/[A-ZÁÉÍÓÚÑ]{2,}(?:\s+[A-ZÁÉÍÓÚÑ]{2,})*\s*•/);
     if (matchPoblacion) {
         datos.poblacion = matchPoblacion[0].replace('•', '').trim();
     }
     
-    // Buscar dirección (ej: "📍 Calle Claudio Marcelo, 25")
+    // Extraer dirección
     const matchDireccion = texto.match(/📍\s*([^\n]+)/) || 
                           texto.match(/Dirección:\s*([^\n]+)/i) ||
                           texto.match(/(Calle|Av\.|Avenida|Plaza)\s+[^,\n]+\s*\d+/);
@@ -270,59 +286,56 @@ function procesarNuevoElemento(elemento) {
         datos.direccion = (matchDireccion[1] || matchDireccion[0]).trim();
     }
     
-    // Buscar tipo de robo
+    // Extraer tipo de robo
     if (texto.includes('vivienda')) datos.tipo = 'Robo en vivienda';
     else if (texto.includes('comercio')) datos.tipo = 'Robo en comercio';
     else if (texto.includes('intento')) datos.tipo = 'Intento de robo';
     else datos.tipo = 'Alerta de seguridad';
     
-    // Buscar prioridad
+    // Extraer prioridad
     if (texto.includes('ALTA')) datos.prioridad = 'ALTA';
     else if (texto.includes('MEDIA')) datos.prioridad = 'MEDIA';
     else datos.prioridad = 'MEDIA';
     
-    // Tomar primeros 150 caracteres como detalles
-    datos.detalles = texto.substring(0, 150).trim() + 
-                    (texto.length > 150 ? '...' : '');
+    // Usar primeros 100 caracteres como detalles
+    datos.detalles = texto.substring(0, 100).trim() + 
+                    (texto.length > 100 ? '...' : '');
     
-    // Si tenemos datos suficientes, enviar alerta
-    if (datos.direccion || datos.poblacion) {
-        console.log("🆕 Nuevo robo detectado en UI:", datos);
-        enviarAlertaAutomatica(datos);
-    }
+    return datos;
 }
 
-// Conectar botones específicos
-function conectarBotones() {
-    // Buscar botones de alerta/robo
-    const botones = document.querySelectorAll('button, [role="button"], .btn, .boton');
+// Conectar con botones de alerta
+function conectarBotonesAlerta() {
+    // Buscar botones que puedan indicar robos
+    const botones = document.querySelectorAll('button, [role="button"], .btn');
     
     botones.forEach(boton => {
-        const textoBtn = (boton.textContent || boton.innerText || '').toLowerCase();
+        const texto = (boton.textContent || boton.innerText || '').toLowerCase();
+        const onclick = boton.getAttribute('onclick') || '';
         
-        if (textoBtn.includes('robo') || textoBtn.includes('alerta') || 
-            textoBtn.includes('enviar') || textoBtn.includes('notificar')) {
+        if (texto.includes('robo') || texto.includes('alerta') || 
+            texto.includes('enviar') || onclick.includes('robo')) {
             
             boton.addEventListener('click', function() {
                 console.log("🖱️ Clic en botón de alerta detectado");
                 
-                // Buscar datos en formularios cercanos
+                // Buscar formulario relacionado
                 const formulario = boton.closest('form');
                 if (formulario) {
                     setTimeout(() => {
-                        const datosForm = extraerDatosFormulario(formulario);
-                        if (datosForm.direccion || datosForm.detalles) {
-                            enviarAlertaAutomatica(datosForm);
+                        const datos = extraerDatosDeFormulario(formulario);
+                        if (datos.direccion || datos.detalles) {
+                            enviarAlertaCorreoAutomatica(datos);
                         }
-                    }, 1000);
+                    }, 1500);
                 }
             }, true);
         }
     });
 }
 
-// Monitorear formularios
-function monitorearFormularios() {
+// Monitorear formularios de reporte
+function monitorearFormulariosReporte() {
     const formularios = document.querySelectorAll('form');
     
     formularios.forEach(form => {
@@ -330,20 +343,20 @@ function monitorearFormularios() {
             console.log("📝 Formulario enviado detectado");
             
             // Extraer datos del formulario
-            const datosForm = extraerDatosFormulario(form);
+            const datosForm = extraerDatosDeFormulario(form);
             
-            // Enviar alerta después de 1.5 segundos
+            // Enviar alerta después de 1 segundo
             setTimeout(() => {
                 if (datosForm.direccion || datosForm.detalles) {
-                    enviarAlertaAutomatica(datosForm);
+                    enviarAlertaCorreoAutomatica(datosForm);
                 }
-            }, 1500);
+            }, 1000);
         });
     });
 }
 
 // Extraer datos de formulario
-function extraerDatosFormulario(formulario) {
+function extraerDatosDeFormulario(formulario) {
     const datos = {};
     const inputs = formulario.querySelectorAll('input, select, textarea');
     
@@ -356,9 +369,9 @@ function extraerDatosFormulario(formulario) {
             
             if (nombreLower.includes('direccion') || nombreLower.includes('ubicacion')) {
                 datos.direccion = valor;
-            } else if (nombreLower.includes('poblacion') || nombreLower.includes('municipio') || nombreLower.includes('ciudad')) {
+            } else if (nombreLower.includes('poblacion') || nombreLower.includes('municipio')) {
                 datos.poblacion = valor;
-            } else if (nombreLower.includes('detalle') || nombreLower.includes('descripcion') || nombreLower.includes('nota')) {
+            } else if (nombreLower.includes('detalle') || nombreLower.includes('descripcion')) {
                 datos.detalles = valor;
             } else if (nombreLower.includes('tipo')) {
                 datos.tipo = valor;
@@ -372,58 +385,54 @@ function extraerDatosFormulario(formulario) {
 }
 
 // ============================================
-// 4. FUNCIONES DE INTERFAZ Y NOTIFICACIONES
+// 4. FUNCIONES AUXILIARES
 // ============================================
 
-function mostrarNotificacionExito() {
-    crearNotificacion(
-        '✅ Alerta enviada por correo automáticamente',
-        '#4CAF50',
-        'check_circle'
-    );
-}
-
-function mostrarNotificacionError() {
-    crearNotificacion(
-        '❌ Error enviando correo. Revisa la consola (F12)',
-        '#f44336',
-        'error'
-    );
-}
-
-function crearNotificacion(mensaje, color, icono) {
+// Mostrar notificación en pantalla
+function mostrarNotificacion(mensaje, tipo = 'info') {
     const notificacion = document.createElement('div');
+    notificacion.id = 'notificacion-correo-' + Date.now();
+    
+    // Estilos
     notificacion.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
         padding: 15px 25px;
-        background-color: ${color};
+        background-color: ${tipo === 'success' ? '#4CAF50' : '#f44336'};
         color: white;
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         z-index: 99999;
         font-family: Arial, sans-serif;
         font-size: 14px;
+        max-width: 350px;
+        animation: slideIn 0.3s ease;
+        border-left: 5px solid ${tipo === 'success' ? '#2E7D32' : '#C62828'};
         display: flex;
         align-items: center;
         gap: 10px;
-        animation: slideIn 0.3s ease;
-        border-left: 5px solid ${color === '#4CAF50' ? '#2E7D32' : '#C62828'};
     `;
+    
+    // Icono
+    const icono = tipo === 'success' ? '✅' : '❌';
     
     notificacion.innerHTML = `
-        <span style="font-size: 20px;">${icono === 'check_circle' ? '✅' : '❌'}</span>
-        <span>${mensaje}</span>
+        <span style="font-size: 20px;">${icono}</span>
+        <div>
+            <strong>${tipo === 'success' ? 'Éxito' : 'Error'}</strong><br>
+            ${mensaje}
+        </div>
     `;
     
+    // Añadir al documento
     document.body.appendChild(notificacion);
     
-    // Añadir animación si no existe
-    if (!document.querySelector('#animacion-notificaciones')) {
-        const style = document.createElement('style');
-        style.id = 'animacion-notificaciones';
-        style.textContent = `
+    // Añadir animaciones CSS si no existen
+    if (!document.querySelector('#estilos-animaciones')) {
+        const estilos = document.createElement('style');
+        estilos.id = 'estilos-animaciones';
+        estilos.textContent = `
             @keyframes slideIn {
                 from { transform: translateX(100%); opacity: 0; }
                 to { transform: translateX(0); opacity: 1; }
@@ -433,7 +442,7 @@ function crearNotificacion(mensaje, color, icono) {
                 to { transform: translateX(100%); opacity: 0; }
             }
         `;
-        document.head.appendChild(style);
+        document.head.appendChild(estilos);
     }
     
     // Eliminar después de 5 segundos
@@ -443,85 +452,97 @@ function crearNotificacion(mensaje, color, icono) {
     }, 5000);
 }
 
-function actualizarContadorEnviados() {
-    // Buscar y actualizar contadores
-    const contadores = [
+// Actualizar contador de alertas en la interfaz
+function actualizarContadorAlertas() {
+    // Buscar elementos que muestren contadores
+    const elementos = [
         document.querySelector('#alertas-enviadas'),
         document.querySelector('.contador-alertas'),
-        document.querySelector('[data-alertas]')
+        document.querySelector('[data-alertas]'),
+        document.querySelector('.alertas-enviadas')
     ];
     
-    contadores.forEach(contador => {
-        if (contador) {
-            const actual = parseInt(contador.textContent) || 0;
-            contador.textContent = actual + 1;
+    elementos.forEach(elemento => {
+        if (elemento) {
+            try {
+                const actual = parseInt(elemento.textContent) || 0;
+                elemento.textContent = actual + 1;
+            } catch (e) {
+                // Ignorar errores
+            }
         }
     });
 }
 
+// Guardar en historial local
 function guardarEnHistorial(datos, exitoso) {
     try {
-        const entrada = {
+        const registro = {
             id: datos.id_alerta || 'hist_' + Date.now(),
             timestamp: new Date().toISOString(),
             datos: datos,
-            exitoso: exitoso
+            exitoso: exitoso,
+            destino: EMAILJS_CONFIG.EMAIL_DESTINO
         };
         
-        const historial = JSON.parse(localStorage.getItem('alertasHistorial') || '[]');
-        historial.unshift(entrada);
-        localStorage.setItem('alertasHistorial', JSON.stringify(historial.slice(0, 50)));
+        const historial = JSON.parse(localStorage.getItem('historialAlertas') || '[]');
+        historial.unshift(registro);
+        localStorage.setItem('historialAlertas', JSON.stringify(historial.slice(0, 100)));
         
         console.log('📝 Registro guardado en historial local');
     } catch (e) {
-        console.error('Error guardando historial:', e);
+        console.error('❌ Error guardando en historial:', e);
     }
+}
+
+// Activar observadores adicionales
+function activarObservadoresRobos() {
+    // También observar cambios en datos almacenados
+    setInterval(() => {
+        // Puedes añadir lógica adicional aquí si es necesario
+    }, 60000); // Cada minuto
 }
 
 // ============================================
 // 5. FUNCIONES DE PRUEBA Y DIAGNÓSTICO
 // ============================================
 
-function probarConexion() {
+// Probar conexión automáticamente
+function probarConexionAutomatica() {
     console.log("🧪 Probando conexión con EmailJS...");
     
     if (typeof emailjs === 'undefined') {
         console.log("⚠️ EmailJS aún no cargado, reintentando...");
-        setTimeout(probarConexion, 1000);
+        setTimeout(probarConexionAutomatica, 1000);
         return;
     }
     
-    // Crear datos de prueba
+    // Datos de prueba
     const datosPrueba = {
-        to_email: EMAILJS_CREDENCIALES.EMAIL_DESTINO,
+        to_email: EMAILJS_CONFIG.EMAIL_DESTINO,
         fecha_hora: new Date().toLocaleString('es-ES'),
-        poblacion: "CÓRDOBA (PRUEBA)",
+        poblacion: "CÓRDOBA (PRUEBA DEL SISTEMA)",
         ubicacion: "Calle Prueba del Sistema 123",
-        situacion: "PRUEBA DEL SISTEMA - No es un robo real",
+        situacion: "PRUEBA AUTOMÁTICA - No es un robo real",
         prioridad: "MEDIA",
-        detalles: "Esta es una prueba automática del sistema de correos. Si recibes esto, ¡el sistema funciona correctamente!",
-        telefono_contacto: EMAILJS_CREDENCIALES.TU_TELEFONO,
+        detalles: "Esta es una prueba automática del sistema de correos. Si recibes este mensaje, significa que el sistema está funcionando correctamente.",
+        telefono_contacto: EMAILJS_CONFIG.TU_TELEFONO,
         id_alerta: "PRUEBA_" + Date.now()
     };
     
     console.log("📤 Enviando correo de prueba...");
     
     emailjs.send(
-        EMAILJS_CREDENCIALES.SERVICE_ID,
-        EMAILJS_CREDENCIALES.TEMPLATE_ID,
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID,
         datosPrueba
     )
     .then(() => {
-        console.log("🎉 ¡PRUEBA EXITOSA! El sistema de correos funciona correctamente");
+        console.log("🎉 ¡PRUEBA EXITOSA! El sistema de correos funciona");
         console.log("📩 Revisa tu correo: avisosderobos@gmail.com");
     })
     .catch((error) => {
-        console.error("❌ PRUEBA FALLIDA. Revisa:", {
-            error: error,
-            user_id: EMAILJS_CREDENCIALES.USER_ID,
-            service_id: EMAILJS_CREDENCIALES.SERVICE_ID,
-            template_id: EMAILJS_CREDENCIALES.TEMPLATE_ID
-        });
+        console.error("❌ PRUEBA FALLIDA. Revisa configuración:", error);
     });
 }
 
@@ -537,42 +558,48 @@ window.probarSistemaCorreos = function() {
     };
     
     console.log("🧪 Ejecutando prueba manual...");
-    enviarAlertaAutomatica(datosPrueba);
+    enviarAlertaCorreoAutomatica(datosPrueba);
     return "✅ Prueba iniciada. Revisa la consola y tu correo.";
 };
 
-// Función para ver estado
+// Función para ver estado del sistema
 window.verEstadoCorreos = function() {
     return {
         configurado: typeof emailjs !== 'undefined',
-        user_id: EMAILJS_CREDENCIALES.USER_ID,
-        service_id: EMAILJS_CREDENCIALES.SERVICE_ID,
-        template_id: EMAILJS_CREDENCIALES.TEMPLATE_ID,
-        destino: EMAILJS_CREDENCIALES.EMAIL_DESTINO,
-        historial: JSON.parse(localStorage.getItem('alertasHistorial') || '[]').length
+        user_id: EMAILJS_CONFIG.USER_ID,
+        service_id: EMAILJS_CONFIG.SERVICE_ID,
+        template_id: EMAILJS_CONFIG.TEMPLATE_ID,
+        destino: EMAILJS_CONFIG.EMAIL_DESTINO,
+        telefono: EMAILJS_CONFIG.TU_TELEFONO,
+        historial: JSON.parse(localStorage.getItem('historialAlertas') || '[]').length
     };
 };
 
+// Función para ver historial de envíos
+window.verHistorialCorreos = function() {
+    const historial = JSON.parse(localStorage.getItem('historialAlertas') || '[]');
+    console.table(historial.map(item => ({
+        Fecha: new Date(item.timestamp).toLocaleString(),
+        Población: item.datos.poblacion,
+        Ubicación: item.datos.ubicacion,
+        Estado: item.exitoso ? '✅' : '❌'
+    })));
+    return historial;
+};
+
 // ============================================
-// 6. INICIAR TODO AUTOMÁTICAMENTE
+// 6. MENSAJE DE INICIO
 // ============================================
 
-// Esperar a que la página cargue
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', inicializarEmailJS);
-} else {
-    inicializarEmailJS();
-}
-
-// Mensaje de bienvenida
 console.log("=========================================");
-console.log("🚨 SISTEMA DE CORREOS AUTOMÁTICOS CARGADO");
+console.log("🚨 SISTEMA DE CORREOS AUTOMÁTICOS");
 console.log("=========================================");
-console.log("Credenciales configuradas correctamente");
 console.log("📧 Correo destino: avisosderobos@gmail.com");
 console.log("📱 Teléfono contacto: 621284357");
+console.log("🌐 Aplicación: " + EMAILJS_CONFIG.APP_URL);
 console.log("-----------------------------------------");
-console.log("Comandos disponibles en consola:");
+console.log("Comandos disponibles en consola (F12):");
 console.log("• probarSistemaCorreos() - Envía prueba");
-console.log("• verEstadoCorreos() - Muestra estado");
+console.log("• verEstadoCorreos()    - Muestra estado");
+console.log("• verHistorialCorreos() - Ver historial");
 console.log("=========================================");
