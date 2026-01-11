@@ -14,7 +14,7 @@ CONFIG = {
     "EMAIL_REMITENTE": "tucorreo@gmail.com",  # Correo que envía
     
     # OPCIÓN 1: GMAIL (necesita contraseña de aplicación)
-    "EMAIL_PASSWORD": "tu_contraseña_de_aplicacion",  # Dejar vacío si no usas
+    "EMAIL_PASSWORD": "oWs_C9225ZOmdBpyU",  # Dejar vacío si no usas
     
     # OPCIÓN 2: SMTP2Go (crear cuenta en smtp2go.com)
     "SMTP2GO_USER": "tu_usuario_smtp2go",
