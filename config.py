@@ -60,8 +60,11 @@ CONFIG = {
         "La Granjuela", "Guadalcázar", "Hinojosa del Duque", "Hornachuelos",
         "Iznájar", "La Guijarrosa", "El Guijo", "Montalbán de Córdoba",
         "Montemayor", "Montoro", "Monturque", "Moriles", "Obejo", "Palenciana",
-        "Pedro Abad", "Pedroche", "Peñarroya-Pueblonuevo", 
-    ]
+        "Pedro Abad", "Pedroche", "Peñarroya-Pueblonuevo", "Villaviciosa de Córdoba",
+        "Villaralto", "Villanueva del Rey", "Villanueva del Duque", "Villaharta",
+        "Villafranca de Córdoba", "Villa del Río", "La Victoria", "Valsequillo",
+        "Valenzuela", "Torrecampo", "Santaella", "Santa Eufemia", "San Sebastián de los Ballesteros",
+        "Rute", "La Rambla", "Alcaracejos", "Añora",
 }
 
 # No modificar lo siguiente
