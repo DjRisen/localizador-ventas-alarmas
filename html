@@ -1,0 +1,45 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alertas Oficiales Córdoba</title>
+    <style>
+        .alerta {
+            border-left: 5px solid;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f9f9f9;
+        }
+        .oficial { border-color: #0066cc; }
+        .meteo { border-color: #ff9900; }
+        .trafico { border-color: #cc0000; }
+        .informacion { border-color: #009900; }
+        .fuente { font-size: 0.8em; color: #666; }
+        .timestamp { font-size: 0.8em; color: #999; }
+    </style>
+</head>
+<body>
+    <h1>⚠️ Alertas Oficiales - Córdoba y Provincia</h1>
+    <p><strong>Nota:</strong> Solo información oficial y pública</p>
+    
+    <div id="filtros">
+        <button onclick="filtrarAlertas('todas')">Todas</button>
+        <button onclick="filtrarAlertas('meteorologicas')">Meteorológicas</button>
+        <button onclick="filtrarAlertas('trafico')">Tráfico</button>
+        <button onclick="filtrarAlertas('informacion')">Información</button>
+    </div>
+    
+    <div id="alertas-container"></div>
+    
+    <div id="legal-notice">
+        <h3>⚠️ Aviso Legal</h3>
+        <p>Este sistema muestra ÚNICAMENTE información pública oficial.</p>
+        <p>No se muestran datos personales ni información sensible.</p>
+        <p>Fuentes verificadas y autorizadas.</p>
+    </div>
+
+    <script src="alertas.js"></script>
+</body>
+</html>
